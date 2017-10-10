@@ -3,9 +3,42 @@ class Protocol {
         this.ms = ms;
     }
 
-    newProtocol() {
+    getProtocolByName(name) {
+      return new Promise((resolve, reject) => {
+        return this.protocols().then((protocols) => {
+          for (var i=0;i<protocols.length;i++) {
+            if (protocols[i].name == name) {
+              resolve(protocols[i]);
+            }
+          }
+          reject("Protocol not found");
+        });
+      });
+    }
+
+    protocols(timeout=1000) {
+      return this.ms.getState("protocol-model", "protocols");
+    }
+
+    protocol_skeletons(timeout=1000) {
+      return this.ms.getState("protocol-model", "protocol-skeletons");
+    }
+
+    newProtocol(timeout=2000) {
       // Create a new Microdrop Protocol
-      this.ms.sendMessage(`microdrop/trigger/protocol-model/new-protocol`);
+      const msg = { __head__: {plugin_name: this.ms.name} }
+      return this.ms.triggerPlugin("protocol-model", "new-protocol",
+        msg, timeout);
+    }
+
+    deleteProtocol(name, timeout=2000) {
+      // TODO: Change protocol to require only name in payload
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        protocol: {name: name}
+      };
+      return this.ms.triggerPlugin("protocol-model", "delete-protocol",
+        msg, timeout);
     }
 }
 
