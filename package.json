@@ -2,11 +2,18 @@
   "name": "microdrop-async",
   "version": "1.0.0",
   "description": "Promise based library for controlling microdrop",
-  "main": "index.js",
+  "main": "bundle.common.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "BSD-2-Clause",
-  "dependencies": {}
+  "dependencies": {
+    "@mqttclient/node": "0.0.14",
+    "@mqttclient/web": "0.0.14",
+    "mqtt": "^2.13.0"
+  },
+  "devDependencies": {
+    "webpack": "^3.6.0"
+  }
 }

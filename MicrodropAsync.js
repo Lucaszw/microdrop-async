@@ -1,24 +1,39 @@
-const mqtt = require('mqtt')
-const NodeMqttClient = require('@mqttclient/node');
+const lo = require("lodash");
+
+const WebMixins = require('./WebMixins');
+const NodeMixins = require('./NodeMixins');
+
+let MqttClient, environment;
+try {
+  MqttClient = require('@mqttclient/web');
+  environment = 'web';
+} catch (e) {
+  MqttClient = require('@mqttclient/node');
+  environment = 'node';
+}
 
 const Protocol = require('./microdrop-async/Protocol');
 
-class MicrodropAsync extends NodeMqttClient {
+class MicrodropAsync extends MqttClient {
     constructor(){
-        super("localhost", 1883, "microdrop");
-        this.protocol = new Protocol(this);
+      super();
+      if (environment == 'web') lo.extend(this, WebMixins);
+      if (environment == 'node') lo.extend(this, NodeMixins);
+      this.protocol = new Protocol(this);
     }
     listen() {
+      console.log("Listening...");
       this.trigger("client-ready", null);
     }
 
     get filepath() {
-      return __dirname;
+      if (environment == 'web') return "web";
+      if (environment == 'node') return __dirname;
     }
 
     clientReady(timeout=1000) {
       return new Promise ((resolve, reject) => {
-        if (this.client.connected) {
+        if (this.connected) {
           resolve(true);
         }else {
           this.on("client-ready", (e) => {
@@ -29,75 +44,37 @@ class MicrodropAsync extends NodeMqttClient {
       });
     }
 
-    getMsg(buf) {
-      if (!buf.toString().length) return false;
-      try {
-        const msg = JSON.parse(buf.toString());
-        return msg;
-      } catch (e) {
-        return false;
-      }
-    }
-
     triggerPlugin(receiver, action, val, timeout=2000) {
-      const topic = `microdrop/trigger/${receiver}/${action}`;
-      return new Promise((resolve, reject) => {
-        return this.clientReady().then(() => {
-          return this.clearSubscriptions().then(() => {
-            this.onNotifyMsg(receiver, action, (payload) => {
-              resolve(payload);
-            });
-            this.sendMessage(topic, val);
-          });
-        });
-        setTimeout(()=> {
-          reject(`<triggerPlugin>#${receiver}#${action}::Timeout`)},
-          timeout);
-      });
+      const makeRequest = async () => {
+        await this.clientReady();
+        await this.clearSubscriptions();
+        const result = await this.callTrigger(receiver, action, val, timeout);
+        return result;
+      }
+      return makeRequest();
     }
 
     getState(sender, property) {
       const topic = `microdrop/${sender}/state/${property}`;
-      return new Promise((resolve, reject) => {
-        return this.clientReady().then(() => {
-          return this.clearSubscriptions().then(() => {
-            this.client.on("message", (t, buf) => {
-              if (t != topic) return;
-              const msg = this.getMsg(buf);
-              if (msg) {resolve(msg);}
-              else {reject("Could not read message in topic payload");}
-            });
-            this.client.subscribe(topic);
-          });
-        });
-      });
+      const makeRequest = async () => {
+        await this.clientReady();
+        await this.clearSubscriptions();
+        const result = await this.newMessage(topic);
+        return result;
+      };
+      return makeRequest();
     }
 
-    clearSubscriptions(timeout=2000) {
-      const promises = new Array(this.subscriptions.length);
-      const url = `mqtt://${this.host}:${this.port}`;
-
+    callTrigger(receiver, action, val, timeout=2000) {
+      const topic = `microdrop/trigger/${receiver}/${action}`;
       return new Promise((resolve, reject) => {
-        this.subscriptions = [];
-        this.client.end(true, () => {
-          console.log("Client disconnected..");
-          this.client = mqtt.connect(url);
-          this.client.on('message', this.onMessage.bind(this));
-          this.client.on('connect', () => {
-            console.log("Client connected...");
-            this.trigger("client-ready", null);
-            resolve(this.client);
-          });
+        this.onNotifyMsg(receiver, action, (payload) => {
+          resolve(payload);
         });
-        setTimeout(() => {reject("Timeout")}, timeout);
-      });
-    }
-
-    unsubscribe(sub) {
-      return new Promise((resolve, reject) => {
-        this.client.unsubscribe(sub, (e) => {
-          resolve(e);
-        });
+        this.sendMessage(topic, val);
+        setTimeout(()=> {
+          reject(`<triggerPlugin>#${receiver}#${action}::Timeout`)
+        }, timeout);
       });
     }
 }
