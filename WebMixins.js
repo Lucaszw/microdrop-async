@@ -18,6 +18,9 @@ WebMixins.newMessage = function(topic) {
 }
 
 WebMixins.clearSubscriptions = function(timeout=2000) {
+  // Remove all crossroad routes
+  this.removeAllRoutes();
+
   // Unsubscribe to all previous messages:
   const unsubscribe = (prev=null) => {
     return new Promise((resolve, reject) => {

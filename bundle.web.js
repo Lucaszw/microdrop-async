@@ -24455,6 +24455,9 @@ WebMixins.newMessage = function(topic) {
 }
 
 WebMixins.clearSubscriptions = function(timeout=2000) {
+  // Remove all crossroad routes
+  this.removeAllRoutes();
+
   // Unsubscribe to all previous messages:
   const unsubscribe = (prev=null) => {
     return new Promise((resolve, reject) => {
@@ -76624,12 +76627,21 @@ class Protocol {
     }
 
     deleteProtocol(name, timeout=2000) {
-      // TODO: Change protocol to require only name in payload
+      // TODO: Change delete-protocol to require only name in payload
       const msg = {
         __head__: {plugin_name: this.ms.name},
         protocol: {name: name}
       };
       return this.ms.triggerPlugin("protocol-model", "delete-protocol",
+        msg, timeout);
+    }
+
+    changeProtocol(name, timeout=2000) {
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        name: name
+      };
+      return this.ms.triggerPlugin("protocol-model", "change-protocol",
         msg, timeout);
     }
 }
