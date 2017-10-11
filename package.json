@@ -1,8 +1,8 @@
 {
   "name": "microdrop-async",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Promise based library for controlling microdrop",
-  "main": "bundle.common.js",
+  "main": "MicrodropAsync.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,6 +11,7 @@
   "dependencies": {
     "@mqttclient/node": "0.0.14",
     "@mqttclient/web": "0.0.14",
+    "lodash": "^4.17.4",
     "mqtt": "^2.13.0"
   },
   "devDependencies": {
