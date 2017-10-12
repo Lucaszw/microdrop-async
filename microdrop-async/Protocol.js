@@ -49,6 +49,16 @@ class Protocol {
       return this.ms.triggerPlugin("protocol-model", "change-protocol",
         msg, timeout);
     }
+
+    loadProtocol(protocol, timeout=2000) {
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        protocol: protocol
+      };
+      return this.ms.triggerPlugin("protocol-model", "load-protocol",
+        msg, timeout);
+    }
+
 }
 
 module.exports = Protocol;
