@@ -46,10 +46,14 @@ class MicrodropAsync extends MqttClient {
       });
     }
 
-    triggerPlugin(receiver, action, val, timeout=2000) {
+    triggerPlugin(receiver, action, val, timeout=10000) {
       const makeRequest = async () => {
-        await this.clientReady();
-        await this.clearSubscriptions();
+        try {
+          await this.clientReady();
+          await this.clearSubscriptions();
+        } catch (e) {
+          throw([`<MicrodropAsync>#${receiver}#${action}`, e]);
+        }
         const result = await this.callTrigger(receiver, action, val, timeout);
         return result;
       }
@@ -59,8 +63,12 @@ class MicrodropAsync extends MqttClient {
     getState(sender, property) {
       const topic = `microdrop/${sender}/state/${property}`;
       const makeRequest = async () => {
-        await this.clientReady();
-        await this.clearSubscriptions();
+        try {
+          await this.clientReady();
+          await this.clearSubscriptions();
+        } catch (e) {
+          thow([`<MicrodropAsync>#${sender}#${property}`, e]);
+        }
         const result = await this.newMessage(topic);
         return result;
       };
