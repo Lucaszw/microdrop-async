@@ -31,7 +31,7 @@ class MicrodropAsync extends MqttClient {
       if (environment == 'node') return __dirname;
     }
 
-    clientReady(timeout=1000) {
+    clientReady(timeout=10000) {
       return new Promise ((resolve, reject) => {
         if (this.connected) {
           resolve(true);
@@ -40,7 +40,9 @@ class MicrodropAsync extends MqttClient {
             resolve(true);
           });
         }
-        setTimeout(() => {reject("Reached timeout")}, timeout );
+        setTimeout(() => {
+          reject(`<MicrodropAsync>#ClientReady Timeout (${timeout})`)},
+            timeout );
       });
     }
 
@@ -65,7 +67,7 @@ class MicrodropAsync extends MqttClient {
       return makeRequest();
     }
 
-    callTrigger(receiver, action, val, timeout=2000) {
+    callTrigger(receiver, action, val, timeout=10000) {
       const topic = `microdrop/trigger/${receiver}/${action}`;
       return new Promise((resolve, reject) => {
         this.onNotifyMsg(receiver, action, (payload) => {
@@ -73,7 +75,7 @@ class MicrodropAsync extends MqttClient {
         });
         this.sendMessage(topic, val);
         setTimeout(()=> {
-          reject(`<triggerPlugin>#${receiver}#${action}::Timeout`)
+          reject(`<triggerPlugin>#${receiver}#${action}::Timeout (${timeout})`)
         }, timeout);
       });
     }

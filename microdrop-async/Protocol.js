@@ -16,22 +16,22 @@ class Protocol {
       });
     }
 
-    protocols(timeout=1000) {
+    protocols(timeout=10000) {
       return this.ms.getState("protocol-model", "protocols");
     }
 
-    protocol_skeletons(timeout=1000) {
+    protocol_skeletons(timeout=10000) {
       return this.ms.getState("protocol-model", "protocol-skeletons");
     }
 
-    newProtocol(timeout=2000) {
+    newProtocol(timeout=10000) {
       // Create a new Microdrop Protocol
       const msg = { __head__: {plugin_name: this.ms.name} }
       return this.ms.triggerPlugin("protocol-model", "new-protocol",
         msg, timeout);
     }
 
-    deleteProtocol(name, timeout=2000) {
+    deleteProtocol(name, timeout=10000) {
       // TODO: Change delete-protocol to require only name in payload
       const msg = {
         __head__: {plugin_name: this.ms.name},
@@ -41,7 +41,7 @@ class Protocol {
         msg, timeout);
     }
 
-    changeProtocol(name, timeout=2000) {
+    changeProtocol(name, timeout=10000) {
       const msg = {
         __head__: {plugin_name: this.ms.name},
         name: name
@@ -50,7 +50,7 @@ class Protocol {
         msg, timeout);
     }
 
-    loadProtocol(protocol, overwrite=false, timeout=2000) {
+    loadProtocol(protocol, overwrite=false, timeout=10000) {
       const msg = {
         __head__: {plugin_name: this.ms.name},
         protocol: protocol,
