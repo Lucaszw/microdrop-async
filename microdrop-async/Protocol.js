@@ -50,10 +50,11 @@ class Protocol {
         msg, timeout);
     }
 
-    loadProtocol(protocol, timeout=2000) {
+    loadProtocol(protocol, overwrite=false, timeout=2000) {
       const msg = {
         __head__: {plugin_name: this.ms.name},
-        protocol: protocol
+        protocol: protocol,
+        overwrite: overwrite
       };
       return this.ms.triggerPlugin("protocol-model", "load-protocol",
         msg, timeout);
