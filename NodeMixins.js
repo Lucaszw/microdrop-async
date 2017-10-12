@@ -26,14 +26,14 @@ NodeMixins.newMessage = function(topic) {
 
 NodeMixins.clearSubscriptions = function(timeout=10000) {
   const url = `mqtt://${this.host}:${this.port}`;
+  this.removeAllRoutes();
+
   return new Promise((resolve, reject) => {
     this.subscriptions = [];
     this.client.end(true, () => {
-      console.log("Client disconnected..");
       this.client = mqtt.connect(url);
       this.client.on('message', this.onMessage.bind(this));
       this.client.on('connect', () => {
-        console.log("Client connected...");
         this.trigger("client-ready", null);
         resolve(this.client);
       });

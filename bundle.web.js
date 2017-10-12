@@ -24370,7 +24370,6 @@ class MicrodropAsync extends MqttClient {
       this.protocol = new Protocol(this);
     }
     listen() {
-      console.log("Listening...");
       this.trigger("client-ready", null);
     }
 
@@ -24379,7 +24378,7 @@ class MicrodropAsync extends MqttClient {
       if (environment == 'node') return __dirname;
     }
 
-    clientReady(timeout=1000) {
+    clientReady(timeout=10000) {
       return new Promise ((resolve, reject) => {
         if (this.connected) {
           resolve(true);
@@ -24388,14 +24387,20 @@ class MicrodropAsync extends MqttClient {
             resolve(true);
           });
         }
-        setTimeout(() => {reject("Reached timeout")}, timeout );
+        setTimeout(() => {
+          reject(`<MicrodropAsync>#ClientReady Timeout (${timeout})`)},
+            timeout );
       });
     }
 
-    triggerPlugin(receiver, action, val, timeout=2000) {
+    triggerPlugin(receiver, action, val, timeout=10000) {
       const makeRequest = async () => {
-        await this.clientReady();
-        await this.clearSubscriptions();
+        try {
+          await this.clientReady();
+          await this.clearSubscriptions();
+        } catch (e) {
+          throw([`<MicrodropAsync>#${receiver}#${action}`, e]);
+        }
         const result = await this.callTrigger(receiver, action, val, timeout);
         return result;
       }
@@ -24405,15 +24410,19 @@ class MicrodropAsync extends MqttClient {
     getState(sender, property) {
       const topic = `microdrop/${sender}/state/${property}`;
       const makeRequest = async () => {
-        await this.clientReady();
-        await this.clearSubscriptions();
+        try {
+          await this.clientReady();
+          await this.clearSubscriptions();
+        } catch (e) {
+          throw([`<MicrodropAsync>#${sender}#${property}`, e]);
+        }
         const result = await this.newMessage(topic);
         return result;
       };
       return makeRequest();
     }
 
-    callTrigger(receiver, action, val, timeout=2000) {
+    callTrigger(receiver, action, val, timeout=10000) {
       const topic = `microdrop/trigger/${receiver}/${action}`;
       return new Promise((resolve, reject) => {
         this.onNotifyMsg(receiver, action, (payload) => {
@@ -24421,7 +24430,7 @@ class MicrodropAsync extends MqttClient {
         });
         this.sendMessage(topic, val);
         setTimeout(()=> {
-          reject(`<triggerPlugin>#${receiver}#${action}::Timeout`)
+          reject(`<MicrodropAsync>:classTriger#${receiver}#${action}::Timeout (${timeout})`)
         }, timeout);
       });
     }
@@ -24448,13 +24457,14 @@ WebMixins.newMessage = function(topic) {
       if (msg.destinationName != topic) return;
       const payloadIsValid = IsJsonString(msg.payloadString);
       if (payloadIsValid) resolve(JSON.parse(msg.payloadString));
-      if (!payloadIsValid) reject("<MicrodropAsync>::Payload Invalid");
+      if (!payloadIsValid) {
+        reject("<MicrodropAsync.Web>#newMessage Payload Invalid")};
     }
     this.client.subscribe(topic);
   });
 }
 
-WebMixins.clearSubscriptions = function(timeout=2000) {
+WebMixins.clearSubscriptions = function(timeout=10000) {
   // Remove all crossroad routes
   this.removeAllRoutes();
 
@@ -24467,18 +24477,23 @@ WebMixins.clearSubscriptions = function(timeout=2000) {
           resolve(this.subscriptions);
         },
         onFailure: () => {
-          reject(this.subscriptions);
+          reject(
+            [`<MicrodropAsync.Web>#clearSubscriptions Failed`,
+              this.subscriptions]);
         }
       });
     });
   };
   // Disconnect client:
-  const disconnect = (prev=null) => {
+  const disconnect = (prev=null, timeout=10000) => {
     return new Promise((resolve, reject) => {
       this.client.onConnectionLost = () => {
         resolve(this.client.isConnected());
       }
       this.client.disconnect();
+      setTimeout(()=>{
+        reject(`<MicrodropAsync.Web>#disconnect Timeout (${timeout})`);
+      }, timeout);
     });
   };
   // Reconnect client:
@@ -24486,14 +24501,20 @@ WebMixins.clearSubscriptions = function(timeout=2000) {
     return new Promise((resolve, reject) => {
       this.client.connect({
         onSuccess: () => {resolve(this.client.isConnected())},
-        onFailure: () => {reject(this.client.isConnected())}
+        onFailure: () => {
+          reject([`<MicrodropAsync.Web>#connect Failure`,
+            this.client.isConnected()])}
       });
     });
   };
   const makeRequest = async () => {
-    await unsubscribe();
-    await disconnect();
-    await connect();
+    try {
+      await unsubscribe();
+      await disconnect();
+      await connect();
+    }catch(e) {
+      throw([`<MicrodropAsync.Web>#clearSubscriptions Failure`, e ]);
+    }
     return this.client;
   }
 
@@ -24527,27 +24548,29 @@ NodeMixins.newMessage = function(topic) {
       if (t != topic) return;
       const msg = this.getMsg(buf);
       if (msg) resolve(msg);
-      if (!msg) reject("Could not read message in topic payload");
+      if (!msg) reject(`<MicrodropAsync.Node>#newMessage Message Malformed`);
     });
     this.client.subscribe(topic);
   });
 }
 
-NodeMixins.clearSubscriptions = function(timeout=2000) {
+NodeMixins.clearSubscriptions = function(timeout=10000) {
   const url = `mqtt://${this.host}:${this.port}`;
+  this.removeAllRoutes();
+
   return new Promise((resolve, reject) => {
     this.subscriptions = [];
     this.client.end(true, () => {
-      console.log("Client disconnected..");
       this.client = mqtt.connect(url);
       this.client.on('message', this.onMessage.bind(this));
       this.client.on('connect', () => {
-        console.log("Client connected...");
         this.trigger("client-ready", null);
         resolve(this.client);
       });
     });
-    setTimeout(() => {reject("Timeout")}, timeout);
+    setTimeout(() => {
+      reject(`<MicrodropAsync.Node>#clearSubscriptions Timeout (${timeout})`)
+    }, timeout);
   });
 }
 
@@ -76611,22 +76634,22 @@ class Protocol {
       });
     }
 
-    protocols(timeout=1000) {
+    protocols(timeout=10000) {
       return this.ms.getState("protocol-model", "protocols");
     }
 
-    protocol_skeletons(timeout=1000) {
+    protocol_skeletons(timeout=10000) {
       return this.ms.getState("protocol-model", "protocol-skeletons");
     }
 
-    newProtocol(timeout=2000) {
+    newProtocol(timeout=10000) {
       // Create a new Microdrop Protocol
       const msg = { __head__: {plugin_name: this.ms.name} }
       return this.ms.triggerPlugin("protocol-model", "new-protocol",
         msg, timeout);
     }
 
-    deleteProtocol(name, timeout=2000) {
+    deleteProtocol(name, timeout=10000) {
       // TODO: Change delete-protocol to require only name in payload
       const msg = {
         __head__: {plugin_name: this.ms.name},
@@ -76636,7 +76659,7 @@ class Protocol {
         msg, timeout);
     }
 
-    changeProtocol(name, timeout=2000) {
+    changeProtocol(name, timeout=10000) {
       const msg = {
         __head__: {plugin_name: this.ms.name},
         name: name
@@ -76644,6 +76667,17 @@ class Protocol {
       return this.ms.triggerPlugin("protocol-model", "change-protocol",
         msg, timeout);
     }
+
+    loadProtocol(protocol, overwrite=false, timeout=10000) {
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        protocol: protocol,
+        overwrite: overwrite
+      };
+      return this.ms.triggerPlugin("protocol-model", "load-protocol",
+        msg, timeout);
+    }
+
 }
 
 module.exports = Protocol;

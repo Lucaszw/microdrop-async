@@ -22,7 +22,6 @@ class MicrodropAsync extends MqttClient {
       this.protocol = new Protocol(this);
     }
     listen() {
-      console.log("Listening...");
       this.trigger("client-ready", null);
     }
 
@@ -67,7 +66,7 @@ class MicrodropAsync extends MqttClient {
           await this.clientReady();
           await this.clearSubscriptions();
         } catch (e) {
-          thow([`<MicrodropAsync>#${sender}#${property}`, e]);
+          throw([`<MicrodropAsync>#${sender}#${property}`, e]);
         }
         const result = await this.newMessage(topic);
         return result;
@@ -83,7 +82,7 @@ class MicrodropAsync extends MqttClient {
         });
         this.sendMessage(topic, val);
         setTimeout(()=> {
-          reject(`<triggerPlugin>#${receiver}#${action}::Timeout (${timeout})`)
+          reject(`<MicrodropAsync>:classTriger#${receiver}#${action}::Timeout (${timeout})`)
         }, timeout);
       });
     }
