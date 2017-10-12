@@ -11,13 +11,14 @@ WebMixins.newMessage = function(topic) {
       if (msg.destinationName != topic) return;
       const payloadIsValid = IsJsonString(msg.payloadString);
       if (payloadIsValid) resolve(JSON.parse(msg.payloadString));
-      if (!payloadIsValid) reject("<MicrodropAsync>::Payload Invalid");
+      if (!payloadIsValid) {
+        reject("<MicrodropAsync.Web>#newMessage Payload Invalid")};
     }
     this.client.subscribe(topic);
   });
 }
 
-WebMixins.clearSubscriptions = function(timeout=2000) {
+WebMixins.clearSubscriptions = function(timeout=10000) {
   // Remove all crossroad routes
   this.removeAllRoutes();
 
@@ -30,18 +31,23 @@ WebMixins.clearSubscriptions = function(timeout=2000) {
           resolve(this.subscriptions);
         },
         onFailure: () => {
-          reject(this.subscriptions);
+          reject(
+            [`<MicrodropAsync.Web>#clearSubscriptions Failed`,
+              this.subscriptions]);
         }
       });
     });
   };
   // Disconnect client:
-  const disconnect = (prev=null) => {
+  const disconnect = (prev=null, timeout=10000) => {
     return new Promise((resolve, reject) => {
       this.client.onConnectionLost = () => {
         resolve(this.client.isConnected());
       }
       this.client.disconnect();
+      setTimeout(()=>{
+        reject(`<MicrodropAsync.Web>#disconnect Timeout (${timeout})`);
+      }, timeout);
     });
   };
   // Reconnect client:
@@ -49,14 +55,20 @@ WebMixins.clearSubscriptions = function(timeout=2000) {
     return new Promise((resolve, reject) => {
       this.client.connect({
         onSuccess: () => {resolve(this.client.isConnected())},
-        onFailure: () => {reject(this.client.isConnected())}
+        onFailure: () => {
+          reject([`<MicrodropAsync.Web>#connect Failure`,
+            this.client.isConnected()])}
       });
     });
   };
   const makeRequest = async () => {
-    await unsubscribe();
-    await disconnect();
-    await connect();
+    try {
+      await unsubscribe();
+      await disconnect();
+      await connect();
+    }catch(e) {
+      throw([`<MicrodropAsync.Web>#clearSubscriptions Failure`, e ]);
+    }
     return this.client;
   }
 

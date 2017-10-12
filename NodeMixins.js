@@ -18,13 +18,13 @@ NodeMixins.newMessage = function(topic) {
       if (t != topic) return;
       const msg = this.getMsg(buf);
       if (msg) resolve(msg);
-      if (!msg) reject("Could not read message in topic payload");
+      if (!msg) reject(`<MicrodropAsync.Node>#newMessage Message Malformed`);
     });
     this.client.subscribe(topic);
   });
 }
 
-NodeMixins.clearSubscriptions = function(timeout=2000) {
+NodeMixins.clearSubscriptions = function(timeout=10000) {
   const url = `mqtt://${this.host}:${this.port}`;
   return new Promise((resolve, reject) => {
     this.subscriptions = [];
@@ -38,7 +38,9 @@ NodeMixins.clearSubscriptions = function(timeout=2000) {
         resolve(this.client);
       });
     });
-    setTimeout(() => {reject("Timeout")}, timeout);
+    setTimeout(() => {
+      reject(`<MicrodropAsync.Node>#clearSubscriptions Timeout (${timeout})`)
+    }, timeout);
   });
 }
 
