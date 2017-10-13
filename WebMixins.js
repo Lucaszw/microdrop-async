@@ -54,7 +54,11 @@ WebMixins.clearSubscriptions = function(timeout=10000) {
   const connect = (prev=null) => {
     return new Promise((resolve, reject) => {
       this.client.connect({
-        onSuccess: () => {resolve(this.client.isConnected())},
+        onSuccess: () => {
+          // Re-add client event bindings (removed after disconnect)
+          this.client.onMessageArrived = this.onMessageArrived.bind(this);
+          resolve(this.client.isConnected())
+        },
         onFailure: () => {
           reject([`<MicrodropAsync.Web>#connect Failure`,
             this.client.isConnected()])}
