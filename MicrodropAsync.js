@@ -20,14 +20,23 @@ class MicrodropAsync extends MqttClient {
       if (environment == 'web') lo.extend(this, WebMixins);
       if (environment == 'node') lo.extend(this, NodeMixins);
       this.protocol = new Protocol(this);
+      this._name = this.generateId();
     }
     listen() {
       this.trigger("client-ready", null);
     }
 
+    get name() {
+      return this._name;
+    }
+
     get filepath() {
       if (environment == 'web') return "web";
       if (environment == 'node') return __dirname;
+    }
+
+    generateId() {
+      return `microdrop-async-${Date.now()}-${Math.ceil(Math.random()*100)}`;
     }
 
     clientReady(timeout=10000) {
@@ -81,7 +90,7 @@ class MicrodropAsync extends MqttClient {
           resolve(payload);
         });
         this.sendMessage(topic, val);
-        setTimeout(()=> {
+        setTimeout(() => {
           reject(`<MicrodropAsync>:classTriger#${receiver}#${action}::Timeout (${timeout})`)
         }, timeout);
       });

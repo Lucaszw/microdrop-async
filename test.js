@@ -14,8 +14,8 @@ var deleteProtocol = async () => {
 };
 
 var newProtocol = async () => {
-  let protocol;
-  await p.newProtocol();
+  const protocol = await p.newProtocol();
+  console.log(protocol);
 };
 
 var skeletons = async() => {
