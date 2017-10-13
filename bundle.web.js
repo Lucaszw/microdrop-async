@@ -24500,9 +24500,9 @@ WebMixins.clearSubscriptions = function(timeout=10000) {
         resolve(this.client.isConnected());
       }
       this.client.disconnect();
-      // setTimeout(()=>{
-      //   reject(`<MicrodropAsync.Web>#disconnect Timeout (${timeout})`);
-      // }, timeout);
+      setTimeout(()=>{
+        reject(`<MicrodropAsync.Web>#disconnect Timeout (${timeout})`);
+      }, timeout);
     });
   };
   // Reconnect client:
@@ -24510,6 +24510,7 @@ WebMixins.clearSubscriptions = function(timeout=10000) {
     return new Promise((resolve, reject) => {
       this.client.connect({
         onSuccess: () => {
+          // Re-add client event bindings (removed after disconnect)
           this.client.onMessageArrived = this.onMessageArrived.bind(this);
           resolve(this.client.isConnected())
         },
