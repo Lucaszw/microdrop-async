@@ -24361,6 +24361,7 @@ try {
 }
 
 const Protocol = __webpack_require__(75);
+const PluginManager = __webpack_require__(76);
 
 class MicrodropAsync extends MqttClient {
     constructor(){
@@ -24368,6 +24369,7 @@ class MicrodropAsync extends MqttClient {
       if (environment == 'web') lo.extend(this, WebMixins);
       if (environment == 'node') lo.extend(this, NodeMixins);
       this.protocol = new Protocol(this);
+      this.pluginManager = new PluginManager(this);
       this._name = this.generateId();
     }
     listen() {
@@ -76630,70 +76632,198 @@ if (typeof module !== 'undefined' && module.exports) {
 /***/ (function(module, exports) {
 
 class Protocol {
-    constructor(ms) {
-        this.ms = ms;
-    }
+  constructor(ms) {
+      this.ms = ms;
+  }
 
-    getProtocolByName(name) {
-      return new Promise((resolve, reject) => {
-        return this.protocols().then((protocols) => {
-          for (var i=0;i<protocols.length;i++) {
-            if (protocols[i].name == name) {
-              resolve(protocols[i]);
-            }
+  getProtocolByName(name) {
+    return new Promise((resolve, reject) => {
+      return this.protocols().then((protocols) => {
+        for (var i=0;i<protocols.length;i++) {
+          if (protocols[i].name == name) {
+            resolve(protocols[i]);
           }
-          reject("Protocol not found");
-        });
+        }
+        reject("Protocol not found");
       });
-    }
+    });
+  }
 
-    protocols(timeout=10000) {
-      return this.ms.getState("protocol-model", "protocols");
-    }
+  protocols(timeout=10000) {
+    return this.ms.getState("protocol-model", "protocols");
+  }
 
-    protocol_skeletons(timeout=10000) {
-      return this.ms.getState("protocol-model", "protocol-skeletons");
-    }
+  protocol_skeletons(timeout=10000) {
+    return this.ms.getState("protocol-model", "protocol-skeletons");
+  }
 
-    newProtocol(timeout=10000) {
-      // Create a new Microdrop Protocol
-      const msg = { __head__: {plugin_name: this.ms.name} }
-      return this.ms.triggerPlugin("protocol-model", "new-protocol",
-        msg, timeout);
-    }
+  newProtocol(timeout=10000) {
+    // Create a new Microdrop Protocol
+    const msg = { __head__: {plugin_name: this.ms.name} }
+    return this.ms.triggerPlugin("protocol-model", "new-protocol",
+      msg, timeout);
+  }
 
-    deleteProtocol(name, timeout=10000) {
-      // TODO: Change delete-protocol to require only name in payload
-      const msg = {
-        __head__: {plugin_name: this.ms.name},
-        protocol: {name: name}
-      };
-      return this.ms.triggerPlugin("protocol-model", "delete-protocol",
-        msg, timeout);
-    }
+  deleteProtocol(name, timeout=10000) {
+    // TODO: Change delete-protocol to require only name in payload
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      protocol: {name: name}
+    };
+    return this.ms.triggerPlugin("protocol-model", "delete-protocol",
+      msg, timeout);
+  }
 
-    changeProtocol(name, timeout=10000) {
-      const msg = {
-        __head__: {plugin_name: this.ms.name},
-        name: name
-      };
-      return this.ms.triggerPlugin("protocol-model", "change-protocol",
-        msg, timeout);
-    }
+  changeProtocol(name, timeout=10000) {
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      name: name
+    };
+    return this.ms.triggerPlugin("protocol-model", "change-protocol",
+      msg, timeout);
+  }
 
-    loadProtocol(protocol, overwrite=false, timeout=10000) {
-      const msg = {
-        __head__: {plugin_name: this.ms.name},
-        protocol: protocol,
-        overwrite: overwrite
-      };
-      return this.ms.triggerPlugin("protocol-model", "load-protocol",
-        msg, timeout);
-    }
+  loadProtocol(protocol, overwrite=false, timeout=10000) {
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      protocol: protocol,
+      overwrite: overwrite
+    };
+    return this.ms.triggerPlugin("protocol-model", "load-protocol",
+      msg, timeout);
+  }
 
 }
 
 module.exports = Protocol;
+
+
+/***/ }),
+/* 76 */
+/***/ (function(module, exports) {
+
+class PluginManager {
+  constructor(ms) {
+    this.ms = ms;
+  }
+
+  getProcessPlugins() {
+    return this.ms.getState("web-server", "process-plugins");
+  }
+
+  async getRunningProcessPlugins() {
+    const plugins = await this.getProcessPlugins();
+    const runningPlugins = new Array();
+    for (const [id, plugin] of Object.entries(plugins)) {
+      if (plugin.state == 'running')
+        runningPlugins.push(plugin);
+    }
+    return runningPlugins;
+  }
+
+  async findProcessPluginByName(name) {
+    const plugins = await this.getProcessPlugins();
+    const pluginInstances = new Array();
+    for (const [id, plugin] of Object.entries(plugins)){
+      if (plugin.name == name)
+        pluginInstances.push(plugin);
+    }
+    return pluginInstances;
+  }
+
+  async checkStatusOfPluginWithName(name) {
+    const plugins = await this.findProcessPluginByName(name);
+    let runningState = false;
+    for (const [i, plugin] of plugins.entries()){
+      if (plugin.state == "running") {
+        runningState = true;
+      }
+    }
+    return runningState;
+  }
+  async startProcessPluginById(id, timeout=10000){
+    const LABEL = "<PluginManager#startProcessPluginById>";
+    const plugin = (await this.getProcessPlugins())[id];
+    if (plugin.state == 'running'){
+      const response = `${name} already running`;
+      console.warn(response);
+      return {success: true, response: response};
+    }
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      path: plugin.path
+    };
+    return (await this.ms.triggerPlugin("web-server", "launch-plugin",
+            msg, timeout));
+  }
+
+  async stopProcessPluginById(id, timeout) {
+    const LABEL = "<PluginManager#stopProcessPluginById>";
+    const plugin = (await this.getProcessPlugins())[id];
+    if (plugin.state == 'stopped'){
+      const response = ` ${name} already stopped`;
+      console.warn(response);
+      return {success: true, response: response};
+    }
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      name: plugin.name
+    };
+    return (await this.ms.triggerPlugin("web-server", "close-plugin",
+            msg, timeout));
+  }
+
+  async stopProcessPluginByName(name) {
+    const LABEL = "<PluginManager#stopProcessPluginByName>";
+    const pluginInstances = await this.findProcessPluginByName(name);
+    const runningState = await this.checkStatusOfPluginWithName(name);
+    if (runningState == false) {
+      const response = `${name} already stopped`;
+      return {success: true, response: response};
+    }
+    if (pluginInstances.length == 0) {
+      throw(`${LABEL} could node find ${name}.
+      Have you added ${name} to the plugin manager?`);
+    }
+    for (const [i, plugin] of pluginInstances.entries()){
+      if (plugin.state == "running"){
+        const pluginId = `${plugin.name}:${plugin.path}`;
+        return (await this.stopProcessPluginById(pluginId));
+      }
+    }
+    throw(`${LABEL} Failed to stop ${name}`);
+  }
+
+  async startProcessPluginByName(name) {
+    const LABEL = "<PluginManager#startProcessPluginByName>";
+    const pluginInstances = await this.findProcessPluginByName(name);
+    let runningState = await this.checkStatusOfPluginWithName(name);
+    if (runningState == true) {
+      const response = `${name} already running`;
+      console.warn(response);
+      return {success: true, response: response};
+    }
+    if (pluginInstances.length > 1) {
+      console.warn(`${LABEL} More than one instance of ${name} running
+        Recommend starting plugin by id vs. name`);
+    }
+    if (pluginInstances.length == 0) {
+      const exception = `${LABEL} could node find ${name}.
+      Have you added ${name} to the plugin manager?`;
+      throw(exception);
+    }
+    for (const [i, plugin] of pluginInstances.entries()){
+      if (plugin.state == "stopped"){
+        const pluginId = `${plugin.name}:${plugin.path}`;
+        return (await this.startProcessPluginById(pluginId));
+      }
+    }
+    throw(`${LABEL} plugin ${name} not started`);
+  }
+
+}
+
+module.exports = PluginManager;
 
 
 /***/ })

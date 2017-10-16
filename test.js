@@ -2,6 +2,8 @@ var _ = require("lodash");
 var MicrodropAsync = require("./MicrodropAsync");
 var m = new MicrodropAsync();
 var p = m.protocol;
+var pm = m.pluginManager;
+
 var action = process.argv[2];
 
 var getLastProtocol = async () => {
@@ -50,8 +52,53 @@ var protocols = async() => {
   console.log(protocols);
 }
 
-if (action == "load") loadProtocol();
-if (action == "new") newProtocol();
-if (action == "del") deleteProtocol();
-if (action == "skeletons") skeletons();
-if (action == "protocols") protocols();
+var processPlugins = async() => {
+  const plugins = await pm.getProcessPlugins();
+  console.log("plugins", plugins);
+}
+
+var runningPlugins = async() => {
+  const plugins = await pm.getRunningProcessPlugins();
+  console.log("running plugins", plugins);
+}
+
+var findDeviceInfoPlugin = async() => {
+  const name = "device_info_plugin";
+  const plugins = await pm.findProcessPluginByName(name);
+  console.log(name, plugins);
+}
+
+var checkDeviceInfoStatus = async() => {
+  const name = "device_info_plugin";
+  const runningState = await pm.checkStatusOfPluginWithName(name);
+  console.log(name, "state", runningState);
+}
+
+var startDeviceInfoPlugin = async () => {
+  const name = "device_info_plugin";
+  const status = await pm.checkStatusOfPluginWithName(name);
+  console.log("running status before: ", status);
+  const state = await pm.startProcessPluginByName(name);
+  console.log(state);
+}
+
+var stopDeviceInfoPlugin = async () => {
+  const name = "device_info_plugin";
+  const status = await pm.checkStatusOfPluginWithName(name);
+  console.log("running status before: ", status);
+  const state = await pm.stopProcessPluginByName(name);
+  console.log(state);
+}
+
+
+if (action == "protocol:load") loadProtocol();
+if (action == "protocol:new") newProtocol();
+if (action == "protocol:del") deleteProtocol();
+if (action == "protocol:skeletons") skeletons();
+if (action == "protocol:protocols") protocols();
+if (action == "manager:processPlugins") processPlugins();
+if (action == "manager:runningPlugins") runningPlugins();
+if (action == "manager:findPlugin") findDeviceInfoPlugin();
+if (action == "manager:checkPluginState") checkDeviceInfoStatus();
+if (action == "manager:startPlugin") startDeviceInfoPlugin();
+if (action == "manager:stopPlugin") stopDeviceInfoPlugin();

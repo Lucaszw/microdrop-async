@@ -13,6 +13,7 @@ try {
 }
 
 const Protocol = require('./microdrop-async/Protocol');
+const PluginManager = require('./microdrop-async/PluginManager');
 
 class MicrodropAsync extends MqttClient {
     constructor(){
@@ -20,6 +21,7 @@ class MicrodropAsync extends MqttClient {
       if (environment == 'web') lo.extend(this, WebMixins);
       if (environment == 'node') lo.extend(this, NodeMixins);
       this.protocol = new Protocol(this);
+      this.pluginManager = new PluginManager(this);
       this._name = this.generateId();
     }
     listen() {
