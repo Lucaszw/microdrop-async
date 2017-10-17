@@ -24362,6 +24362,7 @@ try {
 const Device = __webpack_require__(75);
 const Protocol = __webpack_require__(77);
 const PluginManager = __webpack_require__(78);
+const Routes = __webpack_require__(79);
 
 class MicrodropAsync extends MqttClient {
     constructor(){
@@ -24369,9 +24370,10 @@ class MicrodropAsync extends MqttClient {
       this.environment = environment;
       if (environment == 'web') lo.extend(this, WebMixins);
       if (environment == 'node') lo.extend(this, NodeMixins);
-      this.protocol = new Protocol(this);
-      this.pluginManager = new PluginManager(this);
       this.device = new Device(this);
+      this.pluginManager = new PluginManager(this);
+      this.protocol = new Protocol(this);
+      this.routes = new Routes(this);
       this._name = this.generateId();
     }
     listen() {
@@ -24449,7 +24451,7 @@ class MicrodropAsync extends MqttClient {
           let payloadJSON;
           try {
             payloadJSON = JSON.parse(payload);
-            console.error(`${LABEL} String payloads are being depricated`);
+            console.warn(`${LABEL} String payloads are being depricated`);
           } catch (e) {
             payloadJSON = payload;
           }
@@ -77178,6 +77180,28 @@ class PluginManager {
 }
 
 module.exports = PluginManager;
+
+
+/***/ }),
+/* 79 */
+/***/ (function(module, exports) {
+
+class Routes {
+  constructor(ms) {
+      this.ms = ms;
+  }
+
+  async startDropletPlanningPlugin() {
+    return (await this.ms.pluginManager.
+      startProcessPluginByName("droplet_planning_plugin"))
+  }
+
+  async stopDropletPlanningPlugin() {
+    return (await this.ms.pluginManager.
+      stopProcessPluginByName("droplet_planning_plugin"))
+  }
+}
+module.exports = Routes;
 
 
 /***/ })

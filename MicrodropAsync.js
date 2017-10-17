@@ -14,6 +14,7 @@ try {
 const Device = require('./microdrop-async/Device');
 const Protocol = require('./microdrop-async/Protocol');
 const PluginManager = require('./microdrop-async/PluginManager');
+const Routes = require('./microdrop-async/Routes');
 
 class MicrodropAsync extends MqttClient {
     constructor(){
@@ -21,9 +22,10 @@ class MicrodropAsync extends MqttClient {
       this.environment = environment;
       if (environment == 'web') lo.extend(this, WebMixins);
       if (environment == 'node') lo.extend(this, NodeMixins);
-      this.protocol = new Protocol(this);
-      this.pluginManager = new PluginManager(this);
       this.device = new Device(this);
+      this.pluginManager = new PluginManager(this);
+      this.protocol = new Protocol(this);
+      this.routes = new Routes(this);
       this._name = this.generateId();
     }
     listen() {
@@ -101,7 +103,7 @@ class MicrodropAsync extends MqttClient {
           let payloadJSON;
           try {
             payloadJSON = JSON.parse(payload);
-            console.error(`${LABEL} String payloads are being depricated`);
+            console.warn(`${LABEL} String payloads are being depricated`);
           } catch (e) {
             payloadJSON = payload;
           }

@@ -3,6 +3,7 @@ var m = new MicrodropAsync();
 var p = m.protocol;
 var pm = m.pluginManager;
 var d = m.device;
+var r= m.routes;
 
 var getLastProtocol = async () => {
   var protocols = await p.protocols();
@@ -106,9 +107,18 @@ var loadDeviceFile = async (filepath) => {
   } else {
     console.log("Opening fileprompt");
     msg = await d.loadFromFilePrompt();
-    console.log(msg);
   }
   console.log("msg", Object.keys(msg.response));
+}
+
+var startPlanningPlugin = async () => {
+  const response = await r.startDropletPlanningPlugin();
+  console.log(response);
+}
+
+var stopPlanningPlugin = async () => {
+  const response = await r.stopDropletPlanningPlugin();
+  console.log(response);
 }
 
 function test(action, input) {
@@ -126,6 +136,8 @@ function test(action, input) {
   if (action == "device:start") startDevice();
   if (action == "device:stop") stopDevice();
   if (action == "device:load") loadDeviceFile(input);
+  if (action == "routes:startPlanningPlugin") startPlanningPlugin();
+  if (action == "routes:stopPlanningPlugin") stopPlanningPlugin();
 }
 if (process) {
   test(process.argv[2], process.argv[3]);
