@@ -77276,6 +77276,14 @@ class Steps {
     return this.ms.putPlugin("step-model", "steps", msg, timeout);
   }
 
+  async putStepNumber(stepNumber, timeout=10000) {
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      stepNumber: stepNumber
+    };
+    return this.ms.putPlugin("step-model", "step-number", msg, timeout);
+  }
+
 }
 
 module.exports = Steps;
