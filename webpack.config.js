@@ -8,4 +8,14 @@ var webConfig = {
   }
 };
 
-module.exports = webConfig;
+var webTestConfig = {
+  entry: './test.js',
+  output: {
+    filename: 'test.web.js',
+    // use library + libraryTarget to expose module globally
+    library: 'MicrodropAsyncTests',
+    libraryTarget: 'var'
+  }
+};
+
+module.exports = [webConfig, webTestConfig];

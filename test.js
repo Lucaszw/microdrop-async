@@ -1,10 +1,8 @@
-var _ = require("lodash");
 var MicrodropAsync = require("./MicrodropAsync");
 var m = new MicrodropAsync();
 var p = m.protocol;
 var pm = m.pluginManager;
-
-var action = process.argv[2];
+var d = m.device;
 
 var getLastProtocol = async () => {
   var protocols = await p.protocols();
@@ -62,43 +60,75 @@ var runningPlugins = async() => {
   console.log("running plugins", plugins);
 }
 
-var findDeviceInfoPlugin = async() => {
-  const name = "device_info_plugin";
+var findPlugin = async (name) => {
   const plugins = await pm.findProcessPluginByName(name);
   console.log(name, plugins);
 }
 
-var checkDeviceInfoStatus = async() => {
-  const name = "device_info_plugin";
+var checkStatus = async (name) => {
   const runningState = await pm.checkStatusOfPluginWithName(name);
   console.log(name, "state", runningState);
 }
 
-var startDeviceInfoPlugin = async () => {
-  const name = "device_info_plugin";
+var startPlugin = async (name) => {
   const status = await pm.checkStatusOfPluginWithName(name);
   console.log("running status before: ", status);
   const state = await pm.startProcessPluginByName(name);
   console.log(state);
 }
 
-var stopDeviceInfoPlugin = async () => {
-  const name = "device_info_plugin";
+var stopPlugin = async (name) => {
   const status = await pm.checkStatusOfPluginWithName(name);
   console.log("running status before: ", status);
   const state = await pm.stopProcessPluginByName(name);
   console.log(state);
 }
 
+var startDevice = async (name) => {
+  const state = await d.startDeviceInfoPlugin();
+  console.log(state);
+}
 
-if (action == "protocol:load") loadProtocol();
-if (action == "protocol:new") newProtocol();
-if (action == "protocol:del") deleteProtocol();
-if (action == "protocol:skeletons") skeletons();
-if (action == "protocol:protocols") protocols();
-if (action == "manager:processPlugins") processPlugins();
-if (action == "manager:runningPlugins") runningPlugins();
-if (action == "manager:findPlugin") findDeviceInfoPlugin();
-if (action == "manager:checkPluginState") checkDeviceInfoStatus();
-if (action == "manager:startPlugin") startDeviceInfoPlugin();
-if (action == "manager:stopPlugin") stopDeviceInfoPlugin();
+var stopDevice = async (name) => {
+  const state = await d.stopDeviceInfoPlugin();
+  console.log(state);
+}
+
+var loadDeviceFile = async (filepath) => {
+  let msg;
+  if (m.environment == "node"){
+    console.log("Loading from filepath");
+    if (!filepath) {
+      console.error("No file specified");
+      return;
+    }
+    msg = await d.loadFromFilePath(filepath);
+  } else {
+    console.log("Opening fileprompt");
+    msg = await d.loadFromFilePrompt();
+    console.log(msg);
+  }
+  console.log("msg", Object.keys(msg.response));
+}
+
+function test(action, input) {
+  if (action == "protocol:load") loadProtocol();
+  if (action == "protocol:new") newProtocol();
+  if (action == "protocol:del") deleteProtocol();
+  if (action == "protocol:skeletons") skeletons();
+  if (action == "protocol:protocols") protocols();
+  if (action == "manager:processPlugins") processPlugins();
+  if (action == "manager:runningPlugins") runningPlugins();
+  if (action == "manager:findPlugin") findPlugin(input);
+  if (action == "manager:checkPluginState") checkStatus(input);
+  if (action == "manager:startPlugin") startPlugin(input);
+  if (action == "manager:stopPlugin") stopPlugin(input);
+  if (action == "device:start") startDevice();
+  if (action == "device:stop") stopDevice();
+  if (action == "device:load") loadDeviceFile(input);
+}
+if (process) {
+  test(process.argv[2], process.argv[3]);
+}
+
+module.exports = test;

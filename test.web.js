@@ -1,4 +1,4 @@
-var MicrodropAsync =
+var MicrodropAsyncTests =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -882,8 +882,8 @@ function nextTick(fn, arg1, arg2, arg3) {
 
 
 
-var base64 = __webpack_require__(35)
-var ieee754 = __webpack_require__(36)
+var base64 = __webpack_require__(36)
+var ieee754 = __webpack_require__(37)
 var isArray = __webpack_require__(16)
 
 exports.Buffer = Buffer
@@ -2788,7 +2788,7 @@ exports.Readable = exports;
 exports.Writable = __webpack_require__(19);
 exports.Duplex = __webpack_require__(4);
 exports.Transform = __webpack_require__(21);
-exports.PassThrough = __webpack_require__(42);
+exports.PassThrough = __webpack_require__(43);
 
 
 /***/ }),
@@ -2819,8 +2819,8 @@ exports.PassThrough = __webpack_require__(42);
 
 
 
-var punycode = __webpack_require__(57);
-var util = __webpack_require__(58);
+var punycode = __webpack_require__(58);
+var util = __webpack_require__(59);
 
 exports.parse = urlParse;
 exports.resolve = urlResolve;
@@ -2895,7 +2895,7 @@ var protocolPattern = /^([a-z0-9.+-]+:)/i,
       'gopher:': true,
       'file:': true
     },
-    querystring = __webpack_require__(59);
+    querystring = __webpack_require__(60);
 
 function urlParse(url, parseQueryString, slashesDenoteHost) {
   if (url && util.isObject(url) && url instanceof Url) return url;
@@ -3536,7 +3536,7 @@ Url.prototype.parseHost = function() {
 
 "use strict";
 
-var tls = __webpack_require__(63)
+var tls = __webpack_require__(64)
 
 function buildBuilder (mqttClient, opts) {
   var connection
@@ -20703,7 +20703,7 @@ module.exports = function(module) {
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
-var MqttClient = __webpack_require__(33)
+var MqttClient = __webpack_require__(34)
 var url = __webpack_require__(10)
 var xtend = __webpack_require__(25)
 var protocols = {}
@@ -20922,7 +20922,7 @@ util.inherits = __webpack_require__(2);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(37);
+var debugUtil = __webpack_require__(38);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -20931,7 +20931,7 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-var BufferList = __webpack_require__(38);
+var BufferList = __webpack_require__(39);
 var destroyImpl = __webpack_require__(18);
 var StringDecoder;
 
@@ -22033,7 +22033,7 @@ util.inherits = __webpack_require__(2);
 
 /*<replacement>*/
 var internalUtil = {
-  deprecate: __webpack_require__(41)
+  deprecate: __webpack_require__(42)
 };
 /*</replacement>*/
 
@@ -22625,7 +22625,7 @@ Writable.prototype._destroy = function (err, cb) {
   this.end();
   cb(err);
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(39).setImmediate, __webpack_require__(1)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(40).setImmediate, __webpack_require__(1)))
 
 /***/ }),
 /* 20 */
@@ -23078,7 +23078,7 @@ function done(stream, er, data) {
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var once = __webpack_require__(43);
+var once = __webpack_require__(44);
 
 var noop = function() {};
 
@@ -23292,7 +23292,7 @@ var protocol = __webpack_require__(23)
 var Buffer = __webpack_require__(3).Buffer
 var empty = Buffer.allocUnsafe(0)
 var zeroBuf = Buffer.from([0])
-var numbers = __webpack_require__(54)
+var numbers = __webpack_require__(55)
 var nextTick = __webpack_require__(6)
 
 var numCache = numbers.cache
@@ -23899,7 +23899,7 @@ function extend() {
 
 "use strict";
 
-var net = __webpack_require__(62)
+var net = __webpack_require__(63)
 
 /*
   variables port and host can be removed since
@@ -24060,8 +24060,8 @@ module.exports = buildBuilder
 /* WEBPACK VAR INJECTION */(function(process, global) {
 
 var Transform = __webpack_require__(9).Transform
-var duplexify = __webpack_require__(64)
-var WS = __webpack_require__(66)
+var duplexify = __webpack_require__(65)
+var WS = __webpack_require__(67)
 var Buffer = __webpack_require__(3).Buffer
 
 module.exports = WebSocketStream
@@ -24346,22 +24346,163 @@ if (IS_BROWSER) {
 /* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
+/* WEBPACK VAR INJECTION */(function(process) {var MicrodropAsync = __webpack_require__(31);
+var m = new MicrodropAsync();
+var p = m.protocol;
+var pm = m.pluginManager;
+var d = m.device;
+
+var getLastProtocol = async () => {
+  var protocols = await p.protocols();
+  var len = protocols.length;
+  var name = protocols[len-1].name;
+  var protocol = await p.getProtocolByName(name);
+  console.log("success", protocol);
+  return protocol;
+}
+
+var deleteProtocol = async () => {
+  var protocols = await p.protocols();
+  console.log("protocols", protocols);
+  var len = protocols.length;
+  var name = protocols[len-1].name;
+  console.log("name", name);
+  var payload = await p.deleteProtocol(name);
+  console.log("success", payload);
+  return payload;
+};
+var loadProtocol = async () => {
+  var protocols = await p.protocols();
+  var protocol = protocols[0];
+  output = await p.loadProtocol(protocol);
+  if (output.requireConfirmation) {
+    console.log("Already exists, giving confirmation to override");
+    output = await p.loadProtocol(protocol, true);
+  }
+  console.log("success", output);
+  return output;
+};
+
+var newProtocol = async () => {
+  const protocol = await p.newProtocol();
+  console.log(protocol);
+};
+
+var skeletons = async() => {
+  const skeletons = await p.protocol_skeletons();
+  console.log(skeletons);
+};
+
+var protocols = async() => {
+  const protocols = await p.protocols();
+  console.log(protocols);
+}
+
+var processPlugins = async() => {
+  const plugins = await pm.getProcessPlugins();
+  console.log("plugins", plugins);
+}
+
+var runningPlugins = async() => {
+  const plugins = await pm.getRunningProcessPlugins();
+  console.log("running plugins", plugins);
+}
+
+var findPlugin = async (name) => {
+  const plugins = await pm.findProcessPluginByName(name);
+  console.log(name, plugins);
+}
+
+var checkStatus = async (name) => {
+  const runningState = await pm.checkStatusOfPluginWithName(name);
+  console.log(name, "state", runningState);
+}
+
+var startPlugin = async (name) => {
+  const status = await pm.checkStatusOfPluginWithName(name);
+  console.log("running status before: ", status);
+  const state = await pm.startProcessPluginByName(name);
+  console.log(state);
+}
+
+var stopPlugin = async (name) => {
+  const status = await pm.checkStatusOfPluginWithName(name);
+  console.log("running status before: ", status);
+  const state = await pm.stopProcessPluginByName(name);
+  console.log(state);
+}
+
+var startDevice = async (name) => {
+  const state = await d.startDeviceInfoPlugin();
+  console.log(state);
+}
+
+var stopDevice = async (name) => {
+  const state = await d.stopDeviceInfoPlugin();
+  console.log(state);
+}
+
+var loadDeviceFile = async (filepath) => {
+  let msg;
+  if (m.environment == "node"){
+    console.log("Loading from filepath");
+    if (!filepath) {
+      console.error("No file specified");
+      return;
+    }
+    msg = await d.loadFromFilePath(filepath);
+  } else {
+    console.log("Opening fileprompt");
+    msg = await d.loadFromFilePrompt();
+    console.log(msg);
+  }
+  console.log("msg", Object.keys(msg.response));
+}
+
+function test(action, input) {
+  if (action == "protocol:load") loadProtocol();
+  if (action == "protocol:new") newProtocol();
+  if (action == "protocol:del") deleteProtocol();
+  if (action == "protocol:skeletons") skeletons();
+  if (action == "protocol:protocols") protocols();
+  if (action == "manager:processPlugins") processPlugins();
+  if (action == "manager:runningPlugins") runningPlugins();
+  if (action == "manager:findPlugin") findPlugin(input);
+  if (action == "manager:checkPluginState") checkStatus(input);
+  if (action == "manager:startPlugin") startPlugin(input);
+  if (action == "manager:stopPlugin") stopPlugin(input);
+  if (action == "device:start") startDevice();
+  if (action == "device:stop") stopDevice();
+  if (action == "device:load") loadDeviceFile(input);
+}
+if (process) {
+  test(process.argv[2], process.argv[3]);
+}
+
+module.exports = test;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
 /* WEBPACK VAR INJECTION */(function(__dirname) {const lo = __webpack_require__(12);
 
-const WebMixins = __webpack_require__(31);
-const NodeMixins = __webpack_require__(32);
+const WebMixins = __webpack_require__(32);
+const NodeMixins = __webpack_require__(33);
 
 let MqttClient, environment;
 try {
-  MqttClient = __webpack_require__(67);
+  MqttClient = __webpack_require__(68);
   environment = 'web';
 } catch (e) {
-  MqttClient = __webpack_require__(68);
+  MqttClient = __webpack_require__(69);
   environment = 'node';
 }
-const Device = __webpack_require__(75);
-const Protocol = __webpack_require__(77);
-const PluginManager = __webpack_require__(78);
+const Device = __webpack_require__(76);
+const Protocol = __webpack_require__(78);
+const PluginManager = __webpack_require__(79);
 
 class MicrodropAsync extends MqttClient {
     constructor(){
@@ -24468,7 +24609,7 @@ module.exports = MicrodropAsync;
 /* WEBPACK VAR INJECTION */}.call(exports, "/"))
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports) {
 
 const WebMixins = new Object();
@@ -24556,7 +24697,7 @@ module.exports = WebMixins;
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const mqtt = __webpack_require__(14)
@@ -24609,7 +24750,7 @@ module.exports = NodeMixins;
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24619,13 +24760,13 @@ module.exports = NodeMixins;
  * Module dependencies
  */
 var events = __webpack_require__(5)
-var Store = __webpack_require__(34)
+var Store = __webpack_require__(35)
 var eos = __webpack_require__(22)
-var mqttPacket = __webpack_require__(45)
+var mqttPacket = __webpack_require__(46)
 var Writable = __webpack_require__(9).Writable
 var inherits = __webpack_require__(2)
-var reInterval = __webpack_require__(55)
-var validations = __webpack_require__(56)
+var reInterval = __webpack_require__(56)
+var validations = __webpack_require__(57)
 var xtend = __webpack_require__(25)
 var setImmediate = global.setImmediate || function (callback) {
   // works in node v0.8
@@ -25634,7 +25775,7 @@ module.exports = MqttClient
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(0)))
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25751,7 +25892,7 @@ module.exports = Store
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25872,7 +26013,7 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -25962,13 +26103,13 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26048,7 +26189,7 @@ module.exports = function () {
 }();
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var apply = Function.prototype.apply;
@@ -26101,13 +26242,13 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(40);
+__webpack_require__(41);
 exports.setImmediate = setImmediate;
 exports.clearImmediate = clearImmediate;
 
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -26300,7 +26441,7 @@ exports.clearImmediate = clearImmediate;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(0)))
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {
@@ -26374,7 +26515,7 @@ function config (name) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26427,10 +26568,10 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 };
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var wrappy = __webpack_require__(44)
+var wrappy = __webpack_require__(45)
 module.exports = wrappy(once)
 module.exports.strict = wrappy(onceStrict)
 
@@ -26475,7 +26616,7 @@ function onceStrict (fn) {
 
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module, exports) {
 
 // Returns a wrapper function that returns a wrapped callback
@@ -26514,28 +26655,28 @@ function wrappy (fn, cb) {
 
 
 /***/ }),
-/* 45 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-exports.parser = __webpack_require__(46)
-exports.generate = __webpack_require__(53)
-exports.writeToStream = __webpack_require__(24)
-
-
-/***/ }),
 /* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var bl = __webpack_require__(47)
+exports.parser = __webpack_require__(47)
+exports.generate = __webpack_require__(54)
+exports.writeToStream = __webpack_require__(24)
+
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var bl = __webpack_require__(48)
 var inherits = __webpack_require__(2)
 var EE = __webpack_require__(5).EventEmitter
-var Packet = __webpack_require__(52)
+var Packet = __webpack_require__(53)
 var constants = __webpack_require__(23)
 
 function Parser () {
@@ -26908,11 +27049,11 @@ module.exports = Parser
 
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {var DuplexStream = __webpack_require__(48)
-  , util         = __webpack_require__(49)
+/* WEBPACK VAR INJECTION */(function(Buffer) {var DuplexStream = __webpack_require__(49)
+  , util         = __webpack_require__(50)
 
 
 function BufferList (callback) {
@@ -27195,14 +27336,14 @@ module.exports = BufferList
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7).Buffer))
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(4);
 
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -27730,7 +27871,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(50);
+exports.isBuffer = __webpack_require__(51);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -27774,7 +27915,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(51);
+exports.inherits = __webpack_require__(52);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -27795,7 +27936,7 @@ function hasOwnProperty(obj, prop) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(0)))
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -27806,7 +27947,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -27835,7 +27976,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 52 */
+/* 53 */
 /***/ (function(module, exports) {
 
 
@@ -27853,7 +27994,7 @@ module.exports = Packet
 
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27916,7 +28057,7 @@ module.exports = generate
 
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27948,7 +28089,7 @@ module.exports = {
 
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28012,7 +28153,7 @@ module.exports = reInterval;
 
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28071,7 +28212,7 @@ module.exports = {
 
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/punycode v1.4.1 by @mathias */
@@ -28610,7 +28751,7 @@ module.exports = {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)(module), __webpack_require__(1)))
 
 /***/ }),
-/* 58 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28633,18 +28774,18 @@ module.exports = {
 
 
 /***/ }),
-/* 59 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-exports.decode = exports.parse = __webpack_require__(60);
-exports.encode = exports.stringify = __webpack_require__(61);
+exports.decode = exports.parse = __webpack_require__(61);
+exports.encode = exports.stringify = __webpack_require__(62);
 
 
 /***/ }),
-/* 60 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28735,7 +28876,7 @@ var isArray = Array.isArray || function (xs) {
 
 
 /***/ }),
-/* 61 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28827,12 +28968,6 @@ var objectKeys = Object.keys || function (obj) {
 
 
 /***/ }),
-/* 62 */
-/***/ (function(module, exports) {
-
-/* (ignored) */
-
-/***/ }),
 /* 63 */
 /***/ (function(module, exports) {
 
@@ -28840,12 +28975,18 @@ var objectKeys = Object.keys || function (obj) {
 
 /***/ }),
 /* 64 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer, process) {var stream = __webpack_require__(9)
 var eos = __webpack_require__(22)
 var inherits = __webpack_require__(2)
-var shift = __webpack_require__(65)
+var shift = __webpack_require__(66)
 
 var SIGNAL_FLUSH = new Buffer([0])
 
@@ -29074,7 +29215,7 @@ module.exports = Duplexify
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7).Buffer, __webpack_require__(0)))
 
 /***/ }),
-/* 65 */
+/* 66 */
 /***/ (function(module, exports) {
 
 module.exports = shift
@@ -29100,7 +29241,7 @@ function getStateLength (state) {
 
 
 /***/ }),
-/* 66 */
+/* 67 */
 /***/ (function(module, exports) {
 
 
@@ -29118,7 +29259,7 @@ module.exports = ws
 
 
 /***/ }),
-/* 67 */
+/* 68 */
 /***/ (function(module, exports) {
 
 module.exports =
@@ -61495,15 +61636,15 @@ if (typeof module !== 'undefined' && module.exports) {
 /******/ ]);
 
 /***/ }),
-/* 68 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(__dirname) {const lo = __webpack_require__(12);
-const crossroads = __webpack_require__(69);
-const Backbone = __webpack_require__(71);
+const crossroads = __webpack_require__(70);
+const Backbone = __webpack_require__(72);
 const mqtt = __webpack_require__(14);
 
-const MQTTMessages = __webpack_require__(74);
+const MQTTMessages = __webpack_require__(75);
 
 function resolveTarget(target){
   // TODO: allow for local, and absolute target paths
@@ -61630,7 +61771,7 @@ module.exports = NodeMqttClient;
 /* WEBPACK VAR INJECTION */}.call(exports, "/"))
 
 /***/ }),
-/* 69 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/** @license
@@ -62348,7 +62489,7 @@ var factory = function (signals) {
 };
 
 if (true) {
-    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(70)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(71)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -62364,7 +62505,7 @@ if (true) {
 
 
 /***/ }),
-/* 70 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*jslint onevar:true, undef:true, newcap:true, regexp:true, bitwise:true, maxerr:50, indent:4, white:false, nomen:false, plusplus:false */
@@ -62816,7 +62957,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*jslint onevar:true, undef:true, newcap:true,
 
 
 /***/ }),
-/* 71 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Backbone.js 1.3.3
@@ -62835,7 +62976,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*jslint onevar:true, undef:true, newcap:true,
 
   // Set up Backbone appropriately for the environment. Start with AMD.
   if (true) {
-    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(72), __webpack_require__(73), exports], __WEBPACK_AMD_DEFINE_RESULT__ = function(_, $, exports) {
+    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(73), __webpack_require__(74), exports], __WEBPACK_AMD_DEFINE_RESULT__ = function(_, $, exports) {
       // Export global even in AMD case in case this script is loaded with
       // others that may still expect a global Backbone.
       root.Backbone = factory(root, exports, _, $);
@@ -64744,7 +64885,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*jslint onevar:true, undef:true, newcap:true,
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 72 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
@@ -66299,7 +66440,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
 
 /***/ }),
-/* 73 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -76559,7 +76700,7 @@ return jQuery;
 
 
 /***/ }),
-/* 74 */
+/* 75 */
 /***/ (function(module, exports) {
 
 /* Mixins for Mqtt Messages */
@@ -76644,13 +76785,13 @@ if (typeof module !== 'undefined' && module.exports) {
 
 
 /***/ }),
-/* 75 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 let fs, path;
 try {
   fs = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
-  path = __webpack_require__(76);
+  path = __webpack_require__(77);
 } catch (e) {};
 
 class Device {
@@ -76751,7 +76892,7 @@ module.exports = Device;
 
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -76982,7 +77123,7 @@ var substr = 'ab'.substr(-1) === 'b'
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports) {
 
 class Protocol {
@@ -77053,7 +77194,7 @@ module.exports = Protocol;
 
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports) {
 
 class PluginManager {

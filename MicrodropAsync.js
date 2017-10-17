@@ -11,17 +11,19 @@ try {
   MqttClient = require('@mqttclient/node');
   environment = 'node';
 }
-
+const Device = require('./microdrop-async/Device');
 const Protocol = require('./microdrop-async/Protocol');
 const PluginManager = require('./microdrop-async/PluginManager');
 
 class MicrodropAsync extends MqttClient {
     constructor(){
       super();
+      this.environment = environment;
       if (environment == 'web') lo.extend(this, WebMixins);
       if (environment == 'node') lo.extend(this, NodeMixins);
       this.protocol = new Protocol(this);
       this.pluginManager = new PluginManager(this);
+      this.device = new Device(this);
       this._name = this.generateId();
     }
     listen() {
@@ -87,13 +89,27 @@ class MicrodropAsync extends MqttClient {
 
     callTrigger(receiver, action, val, timeout=10000) {
       const topic = `microdrop/trigger/${receiver}/${action}`;
+      const LABEL =`<MicrodropAsync#callTrigger> ${receiver}#${action}`;
+
       return new Promise((resolve, reject) => {
         this.onNotifyMsg(receiver, action, (payload) => {
-          resolve(payload);
+          if (this.environment == "node") {
+            resolve(payload);
+            return;
+          }
+          // XXX: Need to migrate WebMqttClient to accept only json payloads
+          let payloadJSON;
+          try {
+            payloadJSON = JSON.parse(payload);
+            console.error(`${LABEL} String payloads are being depricated`);
+          } catch (e) {
+            payloadJSON = payload;
+          }
+          resolve(payloadJSON);
         });
         this.sendMessage(topic, val);
         setTimeout(() => {
-          reject(`<MicrodropAsync>:classTriger#${receiver}#${action}::Timeout (${timeout})`)
+          reject(`${LABEL}::Timeout (${timeout})`);
         }, timeout);
       });
     }
