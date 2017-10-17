@@ -11,10 +11,12 @@ try {
   MqttClient = require('@mqttclient/node');
   environment = 'node';
 }
+const Electrodes = require('./microdrop-async/Electrodes');
 const Device = require('./microdrop-async/Device');
 const Protocol = require('./microdrop-async/Protocol');
 const PluginManager = require('./microdrop-async/PluginManager');
 const Routes = require('./microdrop-async/Routes');
+const Steps = require('./microdrop-async/Steps');
 
 class MicrodropAsync extends MqttClient {
     constructor(){
@@ -22,10 +24,12 @@ class MicrodropAsync extends MqttClient {
       this.environment = environment;
       if (environment == 'web') lo.extend(this, WebMixins);
       if (environment == 'node') lo.extend(this, NodeMixins);
+      this.electrodes = new Electrodes(this);
       this.device = new Device(this);
       this.pluginManager = new PluginManager(this);
       this.protocol = new Protocol(this);
       this.routes = new Routes(this);
+      this.steps = new Steps(this);
       this._name = this.generateId();
     }
     listen() {
@@ -60,40 +64,45 @@ class MicrodropAsync extends MqttClient {
       });
     }
 
-    triggerPlugin(receiver, action, val, timeout=10000) {
-      const makeRequest = async () => {
-        try {
-          await this.clientReady();
-          await this.clearSubscriptions();
-        } catch (e) {
-          throw([`<MicrodropAsync>#${receiver}#${action}`, e]);
-        }
-        const result = await this.callTrigger(receiver, action, val, timeout);
-        return result;
+    async triggerPlugin(receiver, action, val, timeout=10000) {
+      try {
+        await this.clientReady();
+        await this.clearSubscriptions();
+      } catch (e) {
+        throw([`<MicrodropAsync>#${receiver}#${action}`, e]);
       }
-      return makeRequest();
+      const result = await this.callAction(receiver, action,
+        val, "trigger", timeout);
+      return result;
     }
 
-    getState(sender, property) {
+    async putPlugin(receiver, property, val, timeout=10000) {
+      const LABEL = `<MicrodropAsync#putPlugin>`;
+      try {
+        await this.clientReady(timeout);
+        await this.clearSubscriptions(timeout);
+      } catch (e) {
+        throw([`${LABEL} ${receiver}#${property}`, e]);
+      }
+      return (await this.callAction(receiver, property, val, "put", timeout));
+    }
+
+    async getState(sender, property) {
       const topic = `microdrop/${sender}/state/${property}`;
-      const makeRequest = async () => {
-        try {
-          await this.clientReady();
-          await this.clearSubscriptions();
-        } catch (e) {
-          throw([`<MicrodropAsync>#${sender}#${property}`, e]);
-        }
-        const result = await this.newMessage(topic);
-        return result;
-      };
-      return makeRequest();
+      try {
+        await this.clientReady();
+        await this.clearSubscriptions();
+      } catch (e) {
+        throw([`<MicrodropAsync>#${sender}#${property}`, e]);
+      }
+      const result = await this.newMessage(topic);
+      return result;
     }
 
-    callTrigger(receiver, action, val, timeout=10000) {
-      const topic = `microdrop/trigger/${receiver}/${action}`;
-      const LABEL =`<MicrodropAsync#callTrigger> ${receiver}#${action}`;
-
+    callAction(receiver, action, val, type="trigger", timeout=10000) {
       return new Promise((resolve, reject) => {
+        const topic = `microdrop/${type}/${receiver}/${action}`;
+        const LABEL =`<MicrodropAsync#callAction> ${receiver}#${action}`;
         this.onNotifyMsg(receiver, action, (payload) => {
           if (this.environment == "node") {
             resolve(payload);

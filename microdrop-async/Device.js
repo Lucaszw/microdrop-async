@@ -9,6 +9,18 @@ class Device {
     this.ms = ms;
   }
 
+  async device() {
+    return (await this.ms.getState("device-model", "device"));
+  }
+
+  async putDevice(device, timeout=10000) {
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      device: device
+    };
+    return this.ms.putPlugin("device-model", "device", msg, timeout);
+  }
+
   async startDeviceInfoPlugin() {
     return (await this.ms.pluginManager.
       startProcessPluginByName("device_info_plugin"))

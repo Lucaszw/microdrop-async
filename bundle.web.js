@@ -24359,10 +24359,12 @@ try {
   MqttClient = __webpack_require__(68);
   environment = 'node';
 }
-const Device = __webpack_require__(75);
-const Protocol = __webpack_require__(77);
-const PluginManager = __webpack_require__(78);
-const Routes = __webpack_require__(79);
+const Electrodes = __webpack_require__(75);
+const Device = __webpack_require__(76);
+const Protocol = __webpack_require__(78);
+const PluginManager = __webpack_require__(79);
+const Routes = __webpack_require__(80);
+const Steps = __webpack_require__(81);
 
 class MicrodropAsync extends MqttClient {
     constructor(){
@@ -24370,10 +24372,12 @@ class MicrodropAsync extends MqttClient {
       this.environment = environment;
       if (environment == 'web') lo.extend(this, WebMixins);
       if (environment == 'node') lo.extend(this, NodeMixins);
+      this.electrodes = new Electrodes(this);
       this.device = new Device(this);
       this.pluginManager = new PluginManager(this);
       this.protocol = new Protocol(this);
       this.routes = new Routes(this);
+      this.steps = new Steps(this);
       this._name = this.generateId();
     }
     listen() {
@@ -24408,40 +24412,45 @@ class MicrodropAsync extends MqttClient {
       });
     }
 
-    triggerPlugin(receiver, action, val, timeout=10000) {
-      const makeRequest = async () => {
-        try {
-          await this.clientReady();
-          await this.clearSubscriptions();
-        } catch (e) {
-          throw([`<MicrodropAsync>#${receiver}#${action}`, e]);
-        }
-        const result = await this.callTrigger(receiver, action, val, timeout);
-        return result;
+    async triggerPlugin(receiver, action, val, timeout=10000) {
+      try {
+        await this.clientReady();
+        await this.clearSubscriptions();
+      } catch (e) {
+        throw([`<MicrodropAsync>#${receiver}#${action}`, e]);
       }
-      return makeRequest();
+      const result = await this.callAction(receiver, action,
+        val, "trigger", timeout);
+      return result;
     }
 
-    getState(sender, property) {
+    async putPlugin(receiver, property, val, timeout=10000) {
+      const LABEL = `<MicrodropAsync#putPlugin>`;
+      try {
+        await this.clientReady(timeout);
+        await this.clearSubscriptions(timeout);
+      } catch (e) {
+        throw([`${LABEL} ${receiver}#${property}`, e]);
+      }
+      return (await this.callAction(receiver, property, val, "put", timeout));
+    }
+
+    async getState(sender, property) {
       const topic = `microdrop/${sender}/state/${property}`;
-      const makeRequest = async () => {
-        try {
-          await this.clientReady();
-          await this.clearSubscriptions();
-        } catch (e) {
-          throw([`<MicrodropAsync>#${sender}#${property}`, e]);
-        }
-        const result = await this.newMessage(topic);
-        return result;
-      };
-      return makeRequest();
+      try {
+        await this.clientReady();
+        await this.clearSubscriptions();
+      } catch (e) {
+        throw([`<MicrodropAsync>#${sender}#${property}`, e]);
+      }
+      const result = await this.newMessage(topic);
+      return result;
     }
 
-    callTrigger(receiver, action, val, timeout=10000) {
-      const topic = `microdrop/trigger/${receiver}/${action}`;
-      const LABEL =`<MicrodropAsync#callTrigger> ${receiver}#${action}`;
-
+    callAction(receiver, action, val, type="trigger", timeout=10000) {
       return new Promise((resolve, reject) => {
+        const topic = `microdrop/${type}/${receiver}/${action}`;
+        const LABEL =`<MicrodropAsync#callAction> ${receiver}#${action}`;
         this.onNotifyMsg(receiver, action, (payload) => {
           if (this.environment == "node") {
             resolve(payload);
@@ -76647,17 +76656,51 @@ if (typeof module !== 'undefined' && module.exports) {
 
 /***/ }),
 /* 75 */
+/***/ (function(module, exports) {
+
+class Electrodes {
+  constructor(ms) {
+    this.ms = ms;
+  }
+
+  async channels() {
+    return (await this.ms.getState("electrodes-model", "channels"));
+  }
+  
+  async electrodes() {
+    return (await this.ms.getState("electrodes-model", "electrodes"));
+  }
+
+}
+
+module.exports = Electrodes;
+
+
+/***/ }),
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 let fs, path;
 try {
   fs = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
-  path = __webpack_require__(76);
+  path = __webpack_require__(77);
 } catch (e) {};
 
 class Device {
   constructor(ms) {
     this.ms = ms;
+  }
+
+  async device() {
+    return (await this.ms.getState("device-model", "device"));
+  }
+
+  async putDevice(device, timeout=10000) {
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      device: device
+    };
+    return this.ms.putPlugin("device-model", "device", msg, timeout);
   }
 
   async startDeviceInfoPlugin() {
@@ -76753,7 +76796,7 @@ module.exports = Device;
 
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -76984,7 +77027,7 @@ var substr = 'ab'.substr(-1) === 'b'
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports) {
 
 class Protocol {
@@ -77055,7 +77098,7 @@ module.exports = Protocol;
 
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports) {
 
 class PluginManager {
@@ -77183,7 +77226,7 @@ module.exports = PluginManager;
 
 
 /***/ }),
-/* 79 */
+/* 80 */
 /***/ (function(module, exports) {
 
 class Routes {
@@ -77202,6 +77245,40 @@ class Routes {
   }
 }
 module.exports = Routes;
+
+
+/***/ }),
+/* 81 */
+/***/ (function(module, exports) {
+
+class Steps {
+  constructor(ms) {
+    this.ms = ms;
+  }
+
+  async steps() {
+    return this.ms.getState("step-model", "steps");
+  }
+
+  async currentStep() {
+    return this.ms.getState("step-model", "step");
+  }
+
+  async currentStepNumber() {
+    return this.ms.getState("step-model", "step-number");
+  }
+
+  async putSteps(steps, timeout=10000) {
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      steps: steps
+    };
+    return this.ms.putPlugin("step-model", "steps", msg, timeout);
+  }
+
+}
+
+module.exports = Steps;
 
 
 /***/ })

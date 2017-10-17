@@ -4,6 +4,7 @@ var p = m.protocol;
 var pm = m.pluginManager;
 var d = m.device;
 var r= m.routes;
+var e = m.electrodes;
 
 var getLastProtocol = async () => {
   var protocols = await p.protocols();
@@ -111,6 +112,11 @@ var loadDeviceFile = async (filepath) => {
   console.log("msg", Object.keys(msg.response));
 }
 
+var getDevice = async() => {
+  const response = await d.device();
+  console.log(Object.keys(response));
+}
+
 var startPlanningPlugin = async () => {
   const response = await r.startDropletPlanningPlugin();
   console.log(response);
@@ -119,6 +125,16 @@ var startPlanningPlugin = async () => {
 var stopPlanningPlugin = async () => {
   const response = await r.stopDropletPlanningPlugin();
   console.log(response);
+}
+
+var getElectrodes = async () => {
+  const response = await e.electrodes();
+  console.log(Object.keys(response));
+}
+
+var getChannels = async () => {
+  const response = await e.channels();
+  console.log(Object.keys(response));
 }
 
 function test(action, input) {
@@ -136,8 +152,11 @@ function test(action, input) {
   if (action == "device:start") startDevice();
   if (action == "device:stop") stopDevice();
   if (action == "device:load") loadDeviceFile(input);
+  if (action == "device:get") getDevice();
   if (action == "routes:startPlanningPlugin") startPlanningPlugin();
   if (action == "routes:stopPlanningPlugin") stopPlanningPlugin();
+  if (action == "electrodes:electrodes") getElectrodes();
+  if (action == "electrodes:channels") getChannels();
 }
 if (process) {
   test(process.argv[2], process.argv[3]);
