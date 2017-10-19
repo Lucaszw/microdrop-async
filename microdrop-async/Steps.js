@@ -1,21 +1,63 @@
+DEFAULT_TIMEOUT = 10000;
+
 class Steps {
   constructor(ms) {
     this.ms = ms;
   }
 
   async steps() {
-    return this.ms.getState("step-model", "steps");
+    const LABEL = "<MicrodropAsync::Steps::step>"; console.log(LABEL);
+    const steps = await this.ms.getState("step-model", "steps");
+    console.log(LABEL, "Steps", steps);
+    return steps;
   }
 
   async currentStep() {
-    return this.ms.getState("step-model", "step");
+    const LABEL = "<MicrodropAsync::Steps::currentStep>";
+    try {
+      const steps = await this.steps();
+      const currentStepNumber = await this.currentStepNumber();
+      return steps[currentStepNumber];
+    } catch (e) {
+      throw([LABEL, e]);
+    }
   }
 
-  async currentStepNumber() {
-    return (await this.ms.getState("step-model", "step-number")).stepNumber;
+  async currentStepNumber(timeout=DEFAULT_TIMEOUT) {
+    const LABEL = "<MicrodropAsync::Steps::currentStepNumber>";
+    try {
+      const response = await this.ms.getState("step-model", "step-number",
+        timeout);
+      return response;
+    } catch (e) {
+      throw([LABEL, e]);
+    }
   }
 
-  async deleteStep(stepNumber, timeout=10000) {
+  async createStep(timeout=DEFAULT_TIMEOUT) {
+    const LABEL = "<MicrodropAsync::Steps::createStep>";
+    try {
+      const steps = await this.createSteps(timeout);
+      return steps[0];
+    } catch (e) {
+      throw([LABEL, e]);
+    }
+  }
+
+  async createSteps(timeout=DEFAULT_TIMEOUT) {
+    const LABEL = "<MicrodropAsync::Steps::createSteps>";
+    try {
+      const msg = { __head__: {plugin_name: this.ms.name} };
+      const d = await this.ms.triggerPlugin('step-model', 'create-steps',
+        msg, timeout);
+      if (d.status == 'success') return d.response;
+      else throw([LABEL, d.response]);
+    } catch (e) {
+      throw([LABEL, e]);
+    }
+  }
+
+  async deleteStep(stepNumber, timeout=DEFAULT_TIMEOUT) {
     const msg = {
       __head__: {plugin_name: this.ms.name},
       stepNumber: stepNumber
@@ -26,7 +68,7 @@ class Steps {
     return (this.ms.triggerPlugin('step-model', 'delete-step', msg, timeout));
   }
 
-  async insertStep(stepNumber, timeout=10000) {
+  async insertStep(stepNumber, timeout=DEFAULT_TIMEOUT) {
     const msg = {
       __head__: {plugin_name: this.ms.name},
       stepNumber: stepNumber
@@ -36,7 +78,7 @@ class Steps {
       msg, timeout));
   }
 
-  async updateStep(key, val, stepNumber, timeout=10000) {
+  async updateStep(key, val, stepNumber, timeout=DEFAULT_TIMEOUT) {
     const msg = {
       __head__: {plugin_name: this.ms.name},
       data: {key: key, val: val, stepNumber: stepNumber}
@@ -46,7 +88,7 @@ class Steps {
       msg, timeout));
   }
 
-  async putSteps(steps, timeout=10000) {
+  async putSteps(steps, timeout=DEFAULT_TIMEOUT) {
     const msg = {
       __head__: {plugin_name: this.ms.name},
       steps: steps
@@ -54,13 +96,19 @@ class Steps {
     return (await this.ms.putPlugin("step-model", "steps", msg, timeout));
   }
 
-  async putStepNumber(stepNumber, timeout=10000) {
-    const msg = {
-      __head__: {plugin_name: this.ms.name},
-      stepNumber: stepNumber
-    };
-    return (await this.ms.putPlugin("step-model", "step-number",
-      msg, timeout));
+  async putStepNumber(stepNumber, timeout=DEFAULT_TIMEOUT) {
+    const LABEL = "<MicrodropAsync::Steps::putStepNumber>";
+    try {
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        stepNumber: stepNumber
+      };
+      const response = await this.ms.putPlugin("step-model", "step-number",
+        msg, timeout);
+      return response;
+    } catch (e) {
+      throw([LABEL, e]);
+    }
   }
 
   async validateStepNumber(stepNumber){

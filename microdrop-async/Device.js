@@ -1,8 +1,13 @@
+const lo = require('lodash');
+
 let fs, path;
 try {
   fs = require('fs');
   path = require('path');
 } catch (e) {};
+
+DEFAULT_TIMEOUT = 10000;
+
 
 class Device {
   constructor(ms) {
@@ -10,67 +15,113 @@ class Device {
   }
 
   async device() {
-    return (await this.ms.getState("device-model", "device"));
+    const LABEL = "<MicrodropAsync::Device::device>"; console.log(LABEL);
+    try {
+      const response = await this.ms.getState("device-model", "device");
+      return response;
+    } catch (e) {
+      throw([LABEL, e]);
+    }
   }
 
-  async putDevice(device, timeout=10000) {
-    const msg = {
-      __head__: {plugin_name: this.ms.name},
-      device: device
-    };
-    return this.ms.putPlugin("device-model", "device", msg, timeout);
+  async electrodes() {
+    const LABEL = "<MicrodropAsync::Device::channels>"; console.log(LABEL);
+    try {
+      const device = await this.ms.getState("device-model", "device");
+      const obj = device.channels_by_electrode;
+      return _.zipObject(obj.index, obj.values);
+    } catch (e) {
+      throw([LABEL, e]);
+    }
+  }
+
+  async channels() {
+    const LABEL = "<MicrodropAsync::Device::channels>"; console.log(LABEL);
+    try {
+      const device = await this.ms.getState("device-model", "device");
+      const obj = device.electrodes_by_channel;
+      return _.zipObject(obj.index, obj.values);
+    } catch (e) {
+      throw([LABEL, e]);
+    }
+  }
+
+  async putDevice(device, timeout=DEFAULT_TIMEOUT) {
+    const LABEL = "<MicrodropAsync::Device::putDevice>"; console.log(LABEL);
+    try {
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        device: device
+      };
+      const response = await this.ms.putPlugin("device-model", "device", msg,
+        timeout);
+      return response;
+    } catch (e) {
+      throw(lo.flattenDeep([LABEL, e]));
+    }
   }
 
   async startDeviceInfoPlugin() {
     return (await this.ms.pluginManager.
-      startProcessPluginByName("device_info_plugin"))
+      startProcessPluginByName("device_info_plugin"));
   }
 
   async stopDeviceInfoPlugin() {
     return (await this.ms.pluginManager.
-      stopProcessPluginByName("device_info_plugin"))
+      stopProcessPluginByName("device_info_plugin"));
   }
 
-  async loadFromFile(file, name, timeout=10000) {
-    const LABEL = `<Device#loadFromFile>`;
-    const msg = {
-      __head__: {plugin_name: this.ms.name},
-      file: file,
-      name: name
-    };
-    return (await this.ms.triggerPlugin("device-model",
-      "load-device", msg, timeout));
-  }
-
-  async loadFromFilePath(filePath, timeout=10000) {
-    const LABEL = `<Device#loadFromFilePath>`;
-    if (this.ms.environment == "web") {
-      thow(`${LABEL} cannot load from file via web client`);
+  async loadFromFile(file, name, timeout=DEFAULT_TIMEOUT) {
+    const LABEL = `<MicrodropAsync::Device::loadFromFile>`;
+    console.log(LABEL);
+    try {
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        file: file,
+        name: name
+      };
+      const response = await this.ms.triggerPlugin("device-model",
+        "load-device", msg, timeout);
+      return response;
+    } catch (e) {
+      throw([LABEL, e]);
     }
-    const _filePath = path.resolve(filePath);
-
-    // Ensure device info plugin is running
-    await this.startDeviceInfoPlugin();
-
-    // Create promise to read file
-    const read = () => {
-      return new Promise((resolve, reject) => {
-        return fs.readFile(_filePath, 'utf8', (err,data) => {
-          if (err) {
-            reject([`${LABEL} failed to read file`, err]);
-          }
-          resolve(data);
-        });
-    })};
-
-    // Read file
-    const file = await read();
-    const name = path.parse(path.basename(_filePath)).name;
-
-    return (await this.loadFromFile(file, name, timeout));
   }
 
-  async loadFromFilePrompt(timeout=10000) {
+  async loadFromFilePath(filePath, timeout=DEFAULT_TIMEOUT) {
+    const LABEL = `<MicrodropAsync::Device::loadFromFilePath>`;
+    console.log(LABEL);
+    try {
+      if (this.ms.environment == "web") {
+        thow(`${LABEL} cannot load from file via web client`);
+      }
+      const _filePath = path.resolve(filePath);
+
+      // Ensure device info plugin is running
+      await this.startDeviceInfoPlugin();
+
+      // Create promise to read file
+      const read = () => {
+        return new Promise((resolve, reject) => {
+          return fs.readFile(_filePath, 'utf8', (err,data) => {
+            if (err) {
+              reject([`${LABEL} failed to read file`, err]);
+            }
+            resolve(data);
+          });
+      })};
+
+      // Read file
+      const file = await read();
+      const name = path.parse(path.basename(_filePath)).name;
+
+      return (await this.loadFromFile(file, name, timeout));
+    } catch (e) {
+      throw([LABEL, e]);
+    }
+  }
+
+  async loadFromFilePrompt(timeout=DEFAULT_TIMEOUT) {
     const LABEL = `<Device#loadFromFilePrompt>`;
     if (this.ms.environment == 'node') {
       thow(`${LABEL} cannot load from fileprompt via node client`);
@@ -104,7 +155,6 @@ class Device {
     };
 
     const f = await read(input);
-    console.log("loading...", f);
     return (await this.loadFromFile(f.file, f.name, timeout));
   }
 

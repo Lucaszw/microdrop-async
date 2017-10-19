@@ -5,29 +5,32 @@ const IsJsonString = (str) => {
   return true;
 }
 
-WebMixins.newMessage = function(topic) {
+DEFAULT_TIMEOUT = 10000;
+
+WebMixins.newMessage = function(topic, timeout=DEFAULT_TIMEOUT) {
+  const LABEL = "<MicrodropAsync::WebMixins::newMessage>";
   return new Promise((resolve, reject) => {
     this.client.onMessageArrived = (msg) => {
       if (msg.destinationName != topic) return;
+      
       const payloadIsValid = IsJsonString(msg.payloadString);
       if (payloadIsValid) resolve(JSON.parse(msg.payloadString));
       if (!payloadIsValid) {
         reject("<MicrodropAsync.Web>#newMessage Payload Invalid")};
     }
     this.client.subscribe(topic);
+    setTimeout(()=>{reject([LABEL, `Timeout (${timeout})`])}, timeout);
   });
 }
 
-WebMixins.clearSubscriptions = function(timeout=10000) {
-  // Remove all crossroad routes
-  this.removeAllRoutes();
+WebMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
+  const subscriptions = this.subscriptions;
 
   // Unsubscribe to all previous messages:
   const unsubscribe = (prev=null) => {
     return new Promise((resolve, reject) => {
       this.client.unsubscribe("#",{
         onSuccess: () => {
-          this.subscriptions = [];
           resolve(this.subscriptions);
         },
         onFailure: () => {
@@ -39,7 +42,7 @@ WebMixins.clearSubscriptions = function(timeout=10000) {
     });
   };
   // Disconnect client:
-  const disconnect = (prev=null, timeout=10000) => {
+  const disconnect = (prev=null, timeout=DEFAULT_TIMEOUT) => {
     return new Promise((resolve, reject) => {
       this.client.onConnectionLost = () => {
         resolve(this.client.isConnected());
@@ -55,6 +58,9 @@ WebMixins.clearSubscriptions = function(timeout=10000) {
     return new Promise((resolve, reject) => {
       this.client.connect({
         onSuccess: () => {
+          for (const [i, sub] of subscriptions) {
+            this.client.subscribe(sub);
+          }
           // Re-add client event bindings (removed after disconnect)
           this.client.onMessageArrived = this.onMessageArrived.bind(this);
           resolve(this.client.isConnected())
@@ -71,7 +77,7 @@ WebMixins.clearSubscriptions = function(timeout=10000) {
       await disconnect();
       await connect();
     }catch(e) {
-      throw([`<MicrodropAsync.Web>#clearSubscriptions Failure`, e ]);
+      throw([`<MicrodropAsync::Web::clearSubscriptions>`, e ]);
     }
     return this.client;
   }

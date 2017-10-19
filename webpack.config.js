@@ -1,7 +1,7 @@
 var webConfig = {
   entry: './MicrodropAsync.js',
   output: {
-    filename: 'bundle.web.js',
+    filename: 'microdrop-async.web.js',
     // use library + libraryTarget to expose module globally
     library: 'MicrodropAsync',
     libraryTarget: 'var'

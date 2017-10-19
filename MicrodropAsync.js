@@ -16,7 +16,27 @@ const Device = require('./microdrop-async/Device');
 const Protocol = require('./microdrop-async/Protocol');
 const PluginManager = require('./microdrop-async/PluginManager');
 const Routes = require('./microdrop-async/Routes');
+const Schema = require('./microdrop-async/Schema');
 const Steps = require('./microdrop-async/Steps');
+
+DEFAULT_TIMEOUT = 10000;
+
+const payloadToJson = (payload) => {
+  // Convert payload to JSON
+  let payloadJSON;
+  if (environment == "web") {
+    // XXX: Need to migrate WebMqttClient to accept only json payloads
+    try {
+      payloadJSON = JSON.parse(payload);
+      console.warn(LABEL, "string payloads are being depricated");
+    } catch (e) {
+      payloadJSON = payload;
+    }
+  } else {
+    payloadJSON = payload;
+  }
+  return payloadJSON;
+};
 
 class MicrodropAsync extends MqttClient {
     constructor(){
@@ -29,6 +49,7 @@ class MicrodropAsync extends MqttClient {
       this.pluginManager = new PluginManager(this);
       this.protocol = new Protocol(this);
       this.routes = new Routes(this);
+      this.schema = new Schema(this);
       this.steps = new Steps(this);
       this._name = this.generateId();
     }
@@ -49,7 +70,7 @@ class MicrodropAsync extends MqttClient {
       return `microdrop-async-${Date.now()}-${Math.ceil(Math.random()*100)}`;
     }
 
-    clientReady(timeout=10000) {
+    clientReady(timeout=DEFAULT_TIMEOUT) {
       return new Promise ((resolve, reject) => {
         if (this.connected) {
           resolve(true);
@@ -59,68 +80,96 @@ class MicrodropAsync extends MqttClient {
           });
         }
         setTimeout(() => {
-          reject(`<MicrodropAsync>#ClientReady Timeout (${timeout})`)},
+          reject(`<MicrodropAsync::clientReady> Timeout (${timeout})`)},
             timeout );
       });
     }
 
-    async triggerPlugin(receiver, action, val, timeout=10000) {
+    async triggerPlugin(receiver, action, val={}, timeout=DEFAULT_TIMEOUT) {
+      const LABEL = `<MicrodropAsync::triggerPlugin> ${receiver}#${action}`;
+
       try {
         await this.clientReady();
         await this.clearSubscriptions();
+        const result = await this.callAction(receiver, action,
+          val, "trigger", timeout);
+        return result;
       } catch (e) {
-        throw([`<MicrodropAsync>#${receiver}#${action}`, e]);
+        throw(lo.flattenDeep([LABEL, e]));
       }
-      const result = await this.callAction(receiver, action,
-        val, "trigger", timeout);
-      return result;
     }
 
-    async putPlugin(receiver, property, val, timeout=10000) {
-      const LABEL = `<MicrodropAsync#putPlugin>`;
+    async putPlugin(receiver, property, val, timeout=DEFAULT_TIMEOUT) {
+      const LABEL = `<MicrodropAsync::putPlugin> ${receiver}#${property}`;
       try {
         await this.clientReady(timeout);
         await this.clearSubscriptions(timeout);
+        return (await this.callAction(receiver, property, val, "put",
+          timeout));
       } catch (e) {
-        throw([`${LABEL} ${receiver}#${property}`, e]);
+        throw(lo.flattenDeep([LABEL, e]));
       }
-      return (await this.callAction(receiver, property, val, "put", timeout));
     }
 
-    async getState(sender, property) {
+    async getState(sender, property, timeout=DEFAULT_TIMEOUT) {
+      const LABEL = "<MicrodropAsync::getState>";
       const topic = `microdrop/${sender}/state/${property}`;
+
+      const getProp = () => {
+        return new Promise((resolve, reject) => {
+          let route;
+          route = this.onStateMsg(sender, property, (payload) => {
+            // Remove route:
+            this.subscriptions = _.pull(this.subscriptions, topic);
+            this.removeRoute(route);
+            // Convert payload to JSON
+            const payloadJSON = payloadToJson(payload);
+            resolve (payloadJSON);
+          });
+          setTimeout(()=>{reject([LABEL, `Timeout (${timeout})`])}, timeout);
+        });
+      };
+
       try {
-        await this.clientReady();
-        await this.clearSubscriptions();
+        await this.clientReady(timeout);
+        await this.clearSubscriptions(timeout);
+        const payload = await getProp();
+        console.log("PAYLOAD:::", payload);
+        return payload;
       } catch (e) {
-        throw([`<MicrodropAsync>#${sender}#${property}`, e]);
+        throw([`<MicrodropAsync::getState> ${sender}#${property}`, e]);
       }
-      const result = await this.newMessage(topic);
-      return result;
     }
 
-    callAction(receiver, action, val, type="trigger", timeout=10000) {
+    callAction(receiver, action, val, type="trigger", timeout=DEFAULT_TIMEOUT) {
+      const LABEL =`<MicrodropAsync::callAction>`;
+
       return new Promise((resolve, reject) => {
         const topic = `microdrop/${type}/${receiver}/${action}`;
-        const LABEL =`<MicrodropAsync#callAction> ${receiver}#${action}`;
-        this.onNotifyMsg(receiver, action, (payload) => {
-          if (this.environment == "node") {
-            resolve(payload);
-            return;
-          }
-          // XXX: Need to migrate WebMqttClient to accept only json payloads
-          let payloadJSON;
-          try {
-            payloadJSON = JSON.parse(payload);
-            console.warn(`${LABEL} String payloads are being depricated`);
-          } catch (e) {
-            payloadJSON = payload;
+        let route;
+        const sub = `microdrop/${receiver}/notify/${this.name}/${action}`;
+        route = this.onNotifyMsg(receiver, action, (payload) => {
+
+          // Remove route
+          this.subscriptions = _.pull(this.subscriptions, sub);
+          this.removeRoute(route);
+
+          // Convert payload to JSON
+          const  payloadJSON = payloadToJson(payload);
+
+          // Resolve message
+          if (payloadJSON.status) {
+            if (payloadJSON.status == "failed")
+              reject(lo.flattenDeep([LABEL, payloadJSON.response]));
+          } else {
+            console.warn([LABEL, "message did not contain status"]);
           }
           resolve(payloadJSON);
         });
+
         this.sendMessage(topic, val);
         setTimeout(() => {
-          reject(`${LABEL}::Timeout (${timeout})`);
+          reject(lo.flattenDeep([LABEL, `Timeout (${timeout})`]));
         }, timeout);
       });
     }

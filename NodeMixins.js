@@ -1,5 +1,7 @@
 const mqtt = require('mqtt')
 
+DEFAULT_TIMEOUT = 10000;
+
 const NodeMixins = new Object();
 
 NodeMixins.getMsg = function(buf) {
@@ -12,7 +14,8 @@ NodeMixins.getMsg = function(buf) {
   }
 }
 
-NodeMixins.newMessage = function(topic) {
+NodeMixins.newMessage = function(topic, timeout=DEFAULT_TIMEOUT) {
+  const LABEL = "<MicrodropAsync::NodeMixins::newMessage>";
   return new Promise((resolve, reject) => {
     this.client.on("message", (t, buf) => {
       if (t != topic) return;
@@ -21,19 +24,25 @@ NodeMixins.newMessage = function(topic) {
       if (!msg) reject(`<MicrodropAsync.Node>#newMessage Message Malformed`);
     });
     this.client.subscribe(topic);
+    setTimeout(()=>{reject([LABEL, `Timeout (${timeout})`])}, timeout);
   });
 }
 
-NodeMixins.clearSubscriptions = function(timeout=10000) {
+NodeMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
   const url = `mqtt://${this.host}:${this.port}`;
-  this.removeAllRoutes();
+  const subscriptions = this.subscriptions;
 
   return new Promise((resolve, reject) => {
-    this.subscriptions = [];
+    // resolve(this.client);
+    // this.subscriptions = [];
     this.client.end(true, () => {
       this.client = mqtt.connect(url);
       this.client.on('message', this.onMessage.bind(this));
       this.client.on('connect', () => {
+        // Re-subscribe to awaiting subscriptions:
+        for (const [i, sub] of subscriptions.entries()){
+          this.client.subscribe(sub);
+        }
         this.trigger("client-ready", null);
         resolve(this.client);
       });

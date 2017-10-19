@@ -9,12 +9,12 @@
   "author": "",
   "license": "BSD-2-Clause",
   "dependencies": {
-    "@mqttclient/node": "0.0.14",
-    "@mqttclient/web": "0.0.14",
+    "@mqttclient/node": "0.0.15",
+    "@mqttclient/web": "0.0.15",
     "lodash": "^4.17.4",
-    "mqtt": "^2.13.0"
+    "mqtt": "^2.13.1"
   },
   "devDependencies": {
-    "webpack": "^3.6.0"
+    "webpack": "^3.8.1"
   }
 }
