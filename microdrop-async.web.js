@@ -37115,7 +37115,6 @@ class MicrodropAsync extends MqttClient {
             }
             // Convert payload to JSON
             const payloadJSON = payloadToJson(payload);
-            console.log(LABEL, "RESOLVING", sender, property, typeof(payloadJSON));
             resolve (payloadJSON);
           });
           setTimeout(()=>{reject([LABEL, `Timeout (${timeout})`])}, timeout);
@@ -37215,9 +37214,7 @@ WebMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
           resolve(this.subscriptions);
         },
         onFailure: () => {
-          reject(
-            [`<MicrodropAsync.Web>#clearSubscriptions Failed`,
-              this.subscriptions]);
+          reject("unsubscribe");
         }
       });
     });
@@ -37230,7 +37227,7 @@ WebMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
       }
       this.client.disconnect();
       setTimeout(()=>{
-        reject(`<MicrodropAsync.Web>#disconnect Timeout (${timeout})`);
+        reject(`Timeout (${timeout})`);
       }, timeout);
     });
   };
@@ -37248,8 +37245,7 @@ WebMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
           resolve(this.client.isConnected())
         },
         onFailure: () => {
-          reject([`<MicrodropAsync.Web>#connect Failure`,
-            this.client.isConnected()])}
+          reject("failed to connect")}
       });
     });
   };
@@ -37259,6 +37255,7 @@ WebMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
       await disconnect();
       await connect();
     }catch(e) {
+      console.error(e);
       throw([`<MicrodropAsync::Web::clearSubscriptions>`, e ]);
     }
     return this.client;
@@ -47122,13 +47119,42 @@ module.exports = PluginManager;
 
 /***/ }),
 /* 82 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
+
+const lo = __webpack_require__(5);
+
+DEFAULT_TIMEOUT = 10000;
 
 class Routes {
   constructor(ms) {
       this.ms = ms;
   }
 
+  async routes() {
+    const LABEL = "<MicrodropAsync::Routes::routes>"; console.log(LABEL);
+    const routes = await this.ms.getState("routes-model", "routes");
+    return routes;
+  }
+
+  async execute(props={}, onComplete=lo.noop, timeout=DEFAULT_TIMEOUT) {
+    const LABEL = "<MicrodropAsync::Routes::execute>"; console.log(LABEL);
+    const dpp = "droplet_planning_plugin";
+    try {
+      if (!lo.isPlainObject(props)) throw("arg 1 should be plain object");
+      if (!lo.isFunction(onComplete)) throw("arg 2 should be function");
+      // Ensure Droplet Planning Plugin is Running
+      await this.startDropletPlanningPlugin();
+      // Trigger execution to start
+      const msg = { __head__: {plugin_name: this.ms.name}, props: props };
+      this.ms.triggerPlugin(dpp, "execute-routes",msg, timeout);
+      // Attach completion handler
+      this.ms.onSignalMsg(dpp, "step-complete", onComplete);
+      return;
+    } catch (e) {
+      // TODO: Add sendNotification method to python library
+      throw([LABEL, e]);
+    }
+  }
   async startDropletPlanningPlugin() {
     return (await this.ms.pluginManager.
       startProcessPluginByName("droplet_planning_plugin"))
@@ -47138,6 +47164,16 @@ class Routes {
     return (await this.ms.pluginManager.
       stopProcessPluginByName("droplet_planning_plugin"))
   }
+
+  async putRoutes(routes, timeout=DEFAULT_TIMEOUT) {
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      routes: routes
+    };
+    const response = await this.ms.putPlugin("routes-model", "routes", msg, timeout);
+    return response;
+  }
+
 }
 module.exports = Routes;
 
@@ -47176,10 +47212,23 @@ class Steps {
     this.ms = ms;
   }
 
-  async steps(caller=null) {
+  async steps() {
     const LABEL = "<MicrodropAsync::Steps::step>"; console.log(LABEL);
     const steps = await this.ms.getState("step-model", "steps");
     return steps;
+  }
+
+  async register(timeout=DEFAULT_TIMEOUT) {
+    const LABEL = "<MicrodropAsync::Steps::register>"; console.log(LABEL);
+    try {
+      const msg = {__head__: {plugin_name: this.ms.name}};
+      const d = await this.ms.triggerPlugin('step-model',
+        'register-plugins', msg, timeout);
+      if (d.status == 'success') return d.response;
+      if (d.status != 'success') throw (d.response);
+    } catch (e) {
+      throw([LABEL, e]);
+    }
   }
 
   async addAttribute(model, key, defaultVal=undefined, timeout=DEFAULT_TIMEOUT) {

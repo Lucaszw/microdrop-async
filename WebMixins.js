@@ -34,9 +34,7 @@ WebMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
           resolve(this.subscriptions);
         },
         onFailure: () => {
-          reject(
-            [`<MicrodropAsync.Web>#clearSubscriptions Failed`,
-              this.subscriptions]);
+          reject("unsubscribe");
         }
       });
     });
@@ -49,7 +47,7 @@ WebMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
       }
       this.client.disconnect();
       setTimeout(()=>{
-        reject(`<MicrodropAsync.Web>#disconnect Timeout (${timeout})`);
+        reject(`Timeout (${timeout})`);
       }, timeout);
     });
   };
@@ -67,8 +65,7 @@ WebMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
           resolve(this.client.isConnected())
         },
         onFailure: () => {
-          reject([`<MicrodropAsync.Web>#connect Failure`,
-            this.client.isConnected()])}
+          reject("failed to connect")}
       });
     });
   };
@@ -78,6 +75,7 @@ WebMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
       await disconnect();
       await connect();
     }catch(e) {
+      console.error(e);
       throw([`<MicrodropAsync::Web::clearSubscriptions>`, e ]);
     }
     return this.client;
