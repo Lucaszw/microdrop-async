@@ -5,6 +5,7 @@ var pm = m.pluginManager;
 var d = m.device;
 var r= m.routes;
 var e = m.electrodes;
+var s = m.steps;
 
 var getLastProtocol = async () => {
   var protocols = await p.protocols();
@@ -137,6 +138,10 @@ var getChannels = async () => {
   console.log(Object.keys(response));
 }
 
+var getSteps = async () => {
+  const response = await s.steps();
+  console.log("<TEST::getSteps>", response);
+}
 function test(action, input) {
   if (action == "protocol:load") loadProtocol();
   if (action == "protocol:new") newProtocol();
@@ -157,6 +162,7 @@ function test(action, input) {
   if (action == "routes:stopPlanningPlugin") stopPlanningPlugin();
   if (action == "electrodes:electrodes") getElectrodes();
   if (action == "electrodes:channels") getChannels();
+  if (action == "steps:steps") getSteps();
 }
 if (process) {
   test(process.argv[2], process.argv[3]);

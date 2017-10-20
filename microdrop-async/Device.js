@@ -29,7 +29,7 @@ class Device {
     try {
       const device = await this.ms.getState("device-model", "device");
       const obj = device.channels_by_electrode;
-      return _.zipObject(obj.index, obj.values);
+      return lo.zipObject(obj.index, obj.values);
     } catch (e) {
       throw([LABEL, e]);
     }
@@ -40,7 +40,7 @@ class Device {
     try {
       const device = await this.ms.getState("device-model", "device");
       const obj = device.electrodes_by_channel;
-      return _.zipObject(obj.index, obj.values);
+      return lo.zipObject(obj.index, obj.values);
     } catch (e) {
       throw([LABEL, e]);
     }

@@ -23,6 +23,24 @@ class Electrodes {
       undefined, timeout));
   }
 
+  async putChannels(channels, timeout=DEFAULT_TIMEOUT) {
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      channels: channels
+    };
+    return (await this.ms.putPlugin("electrodes-model", "channels",
+      msg, timeout));
+  }
+
+  async putElectrodes(electrodes, timeout=DEFAULT_TIMEOUT) {
+    const msg = {
+      __head__: {plugin_name: this.ms.name},
+      electrodes: electrodes
+    };
+    return (await this.ms.putPlugin("electrodes-model", "electrodes",
+      msg, timeout));
+  }
+
 }
 
 module.exports = Electrodes;

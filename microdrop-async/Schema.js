@@ -1,3 +1,5 @@
+const lo = require("lodash");
+
 class Schema {
   constructor(ms) {
     this.ms = ms;
@@ -8,7 +10,7 @@ class Schema {
 
   async flatten() {
     const schema = await this.ms.getState("schema-model", "schema");
-    return Object.assign(..._.values(schema));
+    return Object.assign(...lo.values(schema));
   }
 }
 

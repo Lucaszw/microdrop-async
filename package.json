@@ -10,7 +10,7 @@
   "license": "BSD-2-Clause",
   "dependencies": {
     "@mqttclient/node": "0.0.15",
-    "@mqttclient/web": "0.0.15",
+    "@mqttclient/web": "0.0.16",
     "lodash": "^4.17.4",
     "mqtt": "^2.13.1"
   },

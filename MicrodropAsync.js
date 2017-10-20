@@ -22,6 +22,7 @@ const Steps = require('./microdrop-async/Steps');
 DEFAULT_TIMEOUT = 10000;
 
 const payloadToJson = (payload) => {
+  const LABEL = "<MicrodropAsync::payloadToJson>";
   // Convert payload to JSON
   let payloadJSON;
   if (environment == "web") {
@@ -29,13 +30,13 @@ const payloadToJson = (payload) => {
     try {
       payloadJSON = JSON.parse(payload);
       console.warn(LABEL, "string payloads are being depricated");
+      return payloadJSON;
     } catch (e) {
-      payloadJSON = payload;
+      return payload;
     }
   } else {
-    payloadJSON = payload;
+    return payload;
   }
-  return payloadJSON;
 };
 
 class MicrodropAsync extends MqttClient {
@@ -119,9 +120,15 @@ class MicrodropAsync extends MqttClient {
         return new Promise((resolve, reject) => {
           let route;
           route = this.onStateMsg(sender, property, (payload) => {
+            console.log(LABEL, "STATE UPDATE", sender, property);
             // Remove route:
-            this.subscriptions = _.pull(this.subscriptions, topic);
-            this.removeRoute(route);
+            this.subscriptions = lo.pull(this.subscriptions, topic);
+            try {
+              this.removeRoute(route);
+            } catch (e) {
+              console.log(LABEL, "ROUTE:::", route, typeof(route));
+              this.removeAllRoutes();
+            }
             // Convert payload to JSON
             const payloadJSON = payloadToJson(payload);
             resolve (payloadJSON);
@@ -134,7 +141,6 @@ class MicrodropAsync extends MqttClient {
         await this.clientReady(timeout);
         await this.clearSubscriptions(timeout);
         const payload = await getProp();
-        console.log("PAYLOAD:::", payload);
         return payload;
       } catch (e) {
         throw([`<MicrodropAsync::getState> ${sender}#${property}`, e]);
@@ -151,8 +157,13 @@ class MicrodropAsync extends MqttClient {
         route = this.onNotifyMsg(receiver, action, (payload) => {
 
           // Remove route
-          this.subscriptions = _.pull(this.subscriptions, sub);
-          this.removeRoute(route);
+          this.subscriptions = lo.pull(this.subscriptions, sub);
+          try {
+            this.removeRoute(route);
+          } catch (e) {
+            console.error(LABEL, "REMOVE ROUTE::", route, typeof(route));
+            this.removeAllRoutes();
+          }
 
           // Convert payload to JSON
           const  payloadJSON = payloadToJson(payload);

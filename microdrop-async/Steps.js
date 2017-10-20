@@ -5,11 +5,24 @@ class Steps {
     this.ms = ms;
   }
 
-  async steps() {
+  async steps(caller=null) {
     const LABEL = "<MicrodropAsync::Steps::step>"; console.log(LABEL);
     const steps = await this.ms.getState("step-model", "steps");
-    console.log(LABEL, "Steps", steps);
     return steps;
+  }
+
+  async addAttribute(model, key, defaultVal=undefined, timeout=DEFAULT_TIMEOUT) {
+    const LABEL = "<MicrodropAsync::Steps::addAttribute>"; console.log(LABEL);
+    try {
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        model: model, key: key, default: defaultVal
+      };
+      return (this.ms.triggerPlugin('step-model', 'add-attribute', msg,
+        timeout));
+    } catch (e) {
+      throw([LABEL, e]);
+    }
   }
 
   async currentStep() {
@@ -79,9 +92,10 @@ class Steps {
   }
 
   async updateStep(key, val, stepNumber, timeout=DEFAULT_TIMEOUT) {
+    const LABEL = "<MicrodropAsync::Steps::updateStep>";
     const msg = {
       __head__: {plugin_name: this.ms.name},
-      data: {key: key, val: val, stepNumber: stepNumber}
+      key: key, val: val, stepNumber: stepNumber
     };
     await this.validateStepNumber(stepNumber);
     return (await this.ms.triggerPlugin("step-model", "update-step",
