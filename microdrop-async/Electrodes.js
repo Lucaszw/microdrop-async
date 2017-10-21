@@ -13,14 +13,12 @@ class Electrodes {
     return (await this.ms.getState("electrodes-model", "electrodes"));
   }
 
-  async clear(timeout=DEFAULT_TIMEOUT) {
-    return (await this.ms.triggerPlugin("electrodes-model", "clear-electrodes",
-      undefined, timeout));
-  }
-
   async reset(timeout=DEFAULT_TIMEOUT) {
+    const msg = {
+      __head__: {plugin_name: this.ms.name}
+    };
     return (await this.ms.triggerPlugin("electrodes-model", "reset-electrodes",
-      undefined, timeout));
+      msg, timeout));
   }
 
   async putChannels(channels, timeout=DEFAULT_TIMEOUT) {
