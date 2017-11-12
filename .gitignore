@@ -56,3 +56,7 @@ typings/
 
 # dotenv environment variables file
 .env
+
+# other
+microdrop-async.web.js
+test.web.js

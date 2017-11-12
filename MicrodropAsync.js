@@ -120,13 +120,11 @@ class MicrodropAsync extends MqttClient {
         return new Promise((resolve, reject) => {
           let route;
           route = this.onStateMsg(sender, property, (payload) => {
-            console.log(LABEL, "STATE UPDATE", sender, property);
             // Remove route:
             this.subscriptions = lo.pull(this.subscriptions, topic);
             try {
               this.removeRoute(route);
             } catch (e) {
-              console.log(LABEL, "ROUTE:::", route, typeof(route));
               this.removeAllRoutes();
             }
             // Convert payload to JSON
@@ -152,16 +150,14 @@ class MicrodropAsync extends MqttClient {
 
       return new Promise((resolve, reject) => {
         const topic = `microdrop/${type}/${receiver}/${action}`;
-        let route;
         const sub = `microdrop/${receiver}/notify/${this.name}/${action}`;
+        let route;
         route = this.onNotifyMsg(receiver, action, (payload) => {
-
           // Remove route
           this.subscriptions = lo.pull(this.subscriptions, sub);
           try {
             this.removeRoute(route);
           } catch (e) {
-            console.error(LABEL, "REMOVE ROUTE::", route, typeof(route));
             this.removeAllRoutes();
           }
 
@@ -170,8 +166,9 @@ class MicrodropAsync extends MqttClient {
 
           // Resolve message
           if (payloadJSON.status) {
-            if (payloadJSON.status == "failed")
+            if (payloadJSON.status != "success"){
               reject(lo.flattenDeep([LABEL, payloadJSON.response]));
+            }
           } else {
             console.warn([LABEL, "message did not contain status"]);
           }
@@ -185,5 +182,8 @@ class MicrodropAsync extends MqttClient {
       });
     }
 }
+
+MicrodropAsync.MqttClient = MqttClient;
+MicrodropAsync.environment = environment;
 
 module.exports = MicrodropAsync;

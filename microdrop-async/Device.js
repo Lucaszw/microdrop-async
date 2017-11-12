@@ -8,10 +8,19 @@ try {
 
 DEFAULT_TIMEOUT = 10000;
 
-
 class Device {
   constructor(ms) {
     this.ms = ms;
+  }
+
+  async threeObject() {
+    const LABEL = "<MicrodropAsync::Device::threeObject>"; console.log(LABEL);
+    try {
+      const response = await this.ms.getState("device-model", "three-object");
+      return response;
+    } catch (e) {
+      throw(lo.flattenDeep([LABEL, e]));
+    }
   }
 
   async device() {
@@ -61,6 +70,39 @@ class Device {
     }
   }
 
+  async putThreeObject(threeObject, timeout=DEFAULT_TIMEOUT) {
+    /* Send three js group object to backend for physics manipulation */
+    const LABEL = "<MicrodropAsync::Device::putThreeObject>";
+    try {
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        threeObject: threeObject
+      };
+      const response = await this.ms.putPlugin(
+        "device-model", "threeObject", msg, timeout);
+      return response;
+    } catch (e) {
+      throw(lo.flattenDeep([LABEL, e]));
+    }
+  }
+
+  async getNeighbouringElectrodes(electrodeID, timeout=DEFAULT_TIMEOUT) {
+    /* Get electrodes in all four directions */
+    const LABEL = "<MicrodropAsync::Device::getNeighbouringElectrodes>";
+    try {
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        electrodeId: electrodeID
+      };
+      const r = await this.ms.triggerPlugin(
+        "device-model", "get-neighbouring-electrodes", msg, timeout
+      );
+      return r.response;
+    } catch (e) {
+      throw(lo.flattenDeep([LABEL, e]));
+    }
+  }
+
   async startDeviceInfoPlugin() {
     return (await this.ms.pluginManager.
       startProcessPluginByName("device_info_plugin"));
@@ -73,7 +115,6 @@ class Device {
 
   async loadFromFile(file, name, timeout=DEFAULT_TIMEOUT) {
     const LABEL = `<MicrodropAsync::Device::loadFromFile>`;
-    console.log(LABEL);
     try {
       const msg = {
         __head__: {plugin_name: this.ms.name},
@@ -156,6 +197,29 @@ class Device {
 
     const f = await read(input);
     return (await this.loadFromFile(f.file, f.name, timeout));
+  }
+
+  async electrodesFromPath(start, path=[], timeout=DEFAULT_TIMEOUT) {
+    const LABEL = "<MicrodropAsync::Device::electrodesFromPath>";
+    /* Either (electrodeId, path []) or (routes {} / []) as arguments */
+    try {
+      // If plain object, convert to array (ignore keys)
+      if (lo.isPlainObject(start)) { start = lo.toArray(start); }
+      if (!lo.isString(start) && !lo.isArray(start)){
+        throw("arg 1 should be string, object, or array");
+      }
+      if (!lo.isArray(path)) throw("arg 2 should be array");
+      const msg = {
+        __head__: {plugin_name: this.ms.name},
+        start: start,
+        path: path
+      };
+      const payload = await this.ms.triggerPlugin("device-model",
+        "electrodes-from-path", msg, timeout);
+      return payload.response;
+    } catch (e) {
+      throw(lo.flattenDeep([LABEL, e]));
+    }
   }
 
 }
