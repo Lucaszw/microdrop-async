@@ -52,7 +52,7 @@ class Electrodes {
     try {
       const msg = {
         __head__: {plugin_name: this.ms.name},
-        activeElectrodes: activeElectrodes
+        "active-electrodes": activeElectrodes
       };
       if (!lo.isArray(activeElectrodes)) throw("arg 1 should be array");
       const payload = await this.ms.putPlugin("electrodes-model", "active-electrodes",

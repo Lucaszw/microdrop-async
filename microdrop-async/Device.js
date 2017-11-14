@@ -76,7 +76,7 @@ class Device {
     try {
       const msg = {
         __head__: {plugin_name: this.ms.name},
-        threeObject: threeObject
+        "three-object": threeObject
       };
       const response = await this.ms.putPlugin(
         "device-model", "threeObject", msg, timeout);
