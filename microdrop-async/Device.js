@@ -79,7 +79,7 @@ class Device {
         "three-object": threeObject
       };
       const response = await this.ms.putPlugin(
-        "device-model", "threeObject", msg, timeout);
+        "device-model", "three-object", msg, timeout);
       return response;
     } catch (e) {
       throw(lo.flattenDeep([LABEL, e]));
