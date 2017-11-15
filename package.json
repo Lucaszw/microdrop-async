@@ -10,7 +10,7 @@
     "link-packages": "npm ln ../mqttclient-web",
     "update-deps": "ncu -u @microdrop/async @microdrop/device-controller @microdrop/ui-plugin && npm install",
     "git-add": "git add package-lock.json && git add -p . && git commit",
-    "publish-pkg": "npm version patch && npm publish && git push origin master"
+    "publish-pkg": "npm run build && npm version patch && npm publish && git push origin master"
   },
   "author": "",
   "license": "BSD-2-Clause",
