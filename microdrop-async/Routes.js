@@ -37,11 +37,15 @@ class Routes {
     }
   }
 
-  async execute(routes, timeout=DEFAULT_TIMEOUT) {
+  async execute(routes, timeout=null) {
     const LABEL = "<MicrodropAsync::Routes::execute>"; console.log(LABEL);
     const msg = {};
     try {
       if (!lo.isArray(routes)) throw("arg 1 should be an array");
+
+      const numSteps = _.zip(_.map(routes, "path")).length;
+      if (!timeout) timeout =  2 * numSteps * DEFAULT_TIMEOUT;
+
       if (!routes[0].start) throw("routes should contain 'start' attribute");
       if (!routes[0].path) throw("routes should contain 'path' attribute");
 
