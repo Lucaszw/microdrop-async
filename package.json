@@ -9,7 +9,7 @@
     "build-dev": "npm run-script link-packages && webpack",
     "link-packages": "npm ln ../mqttclient-web",
     "git-add": "git add package-lock.json && git add . && git commit",
-    "publish": "npm version patch && npm publish && git push origin master"
+    "patch-and-publish": "npm version patch && npm publish && git push origin master"
   },
   "author": "",
   "license": "BSD-2-Clause",
