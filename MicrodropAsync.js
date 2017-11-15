@@ -96,7 +96,7 @@ class MicrodropAsync extends MqttClient {
           val, "trigger", timeout);
         return result;
       } catch (e) {
-        throw(lo.flattenDeep([LABEL, e]));
+        throw(lo.flattenDeep([LABEL, e.toString().split(",").join("\n")]));
       }
     }
 
@@ -108,7 +108,7 @@ class MicrodropAsync extends MqttClient {
         return (await this.callAction(receiver, property, val, "put",
           timeout));
       } catch (e) {
-        throw(lo.flattenDeep([LABEL, e]));
+        throw(lo.flattenDeep([LABEL, e.toString().split(",").join("\n")]));
       }
     }
 
@@ -141,7 +141,8 @@ class MicrodropAsync extends MqttClient {
         const payload = await getProp();
         return payload;
       } catch (e) {
-        throw([`<MicrodropAsync::getState> ${sender}#${property}`, e]);
+        var estr = e.toString().split(",").join("\n");
+        throw(lo.flattenDeep([LABEL, topic, estr]));
       }
     }
 
