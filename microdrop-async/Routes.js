@@ -12,9 +12,8 @@ class Routes {
     try {
       if (!lo.isArray(routes)) throw("expected arg1 to be array of routes")
 
-      const uuids = _.map(rotues, 'uuid');
-
-      let routes = await this.routes(timeout);
+      const uuids = _.map(routes, 'uuid');
+      routes = await this.routes(timeout);
       routes = lo.filter(routes, (r)=>!lo.includes(uuids, r.uuid));
 
       const msg = {
