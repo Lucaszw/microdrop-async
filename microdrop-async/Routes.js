@@ -7,25 +7,15 @@ class Routes {
       this.ms = ms;
   }
 
-  async clear(arg1, timeout=DEFAULT_TIMEOUT) {
+  async clear(routes, timeout=DEFAULT_TIMEOUT) {
     const LABEL = "<MicrodropAsync::Routes::clear>"; console.log(LABEL);
     try {
-      let keys;
-      if (!lo.isPlainObject(arg1) && !lo.isArray(arg1)){
-        throw("arg 1 should be array or object");
-      }
-      // Allow passing: route object, route uuids, route objects, uuids
-      if (lo.isPlainObject(arg1)) {
-        if (arg1.uuid)  {keys = [arg1.uuid]; }
-        if (!arg1.uuid) { keys = lo.keys(arg1); }
-      }
-      if (lo.isArray(arg1)) {
-        if (lo.isString(arg1[0])) { keys = arg1}
-        if (lo.isPlainObject(arg1[0])) { keys = _.map(arg1, "uuid") }
-      }
+      if (!lo.isArray(routes)) throw("expected arg1 to be array of routes")
+
+      const uuids = _.map(rotues, 'uuid');
 
       let routes = await this.routes(timeout);
-      routes = lo.omit(routes, keys);
+      routes = lo.filter(routes, (r)=>!lo.includes(uuids, r.uuid));
 
       const msg = {
         __head__: {plugin_name: this.ms.name},
