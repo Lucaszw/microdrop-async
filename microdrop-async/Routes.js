@@ -1,6 +1,8 @@
+const Ajv = require('ajv');
 const lo = require('lodash');
 
-DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 10000;
+const ajv = new Ajv({useDefaults: true});
 
 class Routes {
   constructor(ms) {
@@ -33,7 +35,7 @@ class Routes {
       const routes = await this.ms.getState("routes-model", "routes", timeout);
       return routes;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, routes]));
+      throw(lo.flattenDeep([LABEL, e.toString().split(",").join("/n")]));
     }
   }
 
@@ -46,8 +48,8 @@ class Routes {
       const numSteps = _.zip(_.map(routes, "path")).length;
       if (!timeout) timeout =  2 * numSteps * DEFAULT_TIMEOUT;
 
-      if (!routes[0].start) throw("routes should contain 'start' attribute");
-      if (!routes[0].path) throw("routes should contain 'path' attribute");
+      const validate = ajv.compile(this.RouteSchema);
+      if (!validate(routes[0])) throw(validate.errors);
 
       lo.set(msg, "__head__.plugin_name", this.ms.name);
       lo.set(msg, "routes", routes);
@@ -77,15 +79,16 @@ class Routes {
   async putRoute(start, path, timeout=DEFAULT_TIMEOUT) {
     const LABEL = "<MicrodropAsync::Routes::putRoute>";
     try {
-      const r = start;
-      if (lo.isObject(start)) { start = r.start; path = r.path; }
-      if (!lo.isString(start)) throw("arg 1 should be string");
-      if (!lo.isArray(path)) throw("arg 2 should be array");
-      const msg = {
-        __head__: {plugin_name: this.ms.name},
-        start: start,
-        path: path
-      };
+      let msg;
+
+      if (lo.isString(start))  { msg = {start, path} }
+      if (!lo.isString(start)) { msg = start }
+
+      _.set(msg, "__head__.plugin_name", this.ms.name);
+
+      const validate = ajv.compile(this.RouteSchema);
+      if (!validate(msg)) throw(validate.errors);
+
       const payload = await this.ms.putPlugin("routes-model", "route", msg, timeout);
       return payload.response;
     } catch (e) {
@@ -93,5 +96,21 @@ class Routes {
     }
   }
 
+  get RouteSchema(){
+    return {
+      type: "object",
+      properties: {
+        start: {type: "string"},
+        path:  {type: "array"},
+        trailLength: {type: "integer", minimum: 1, default: 1},
+        repeatDurationSeconds: {type: "number", minium: 0, default: 1},
+        transitionDurationMilliseconds: {type: "integer", minimum: 100, default: 1000},
+        routeRepeats: {type: "integer", minimum: 1, default: 1}
+      },
+      required: ['start', 'path']
+    }
+  }
+
 }
+
 module.exports = Routes;

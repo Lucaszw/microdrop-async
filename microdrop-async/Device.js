@@ -64,7 +64,7 @@ class Device {
       lo.set(msg, "routes", routes);
       const payload = await this.ms.triggerPlugin("device-model",
         "electrodes-from-routes", msg, timeout);
-      return payload.response;
+      return payload.response[0];
     } catch (e) {
       throw(lo.flattenDeep([LABEL, e.toString()]));
     }

@@ -5,18 +5,21 @@
   "main": "MicrodropAsync.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
-    "build-dev": "npm run-script link-packages && webpack",
-    "link-packages": "npm ln ../mqttclient-web",
-    "update-deps": "ncu -ua @microdrop/async @microdrop/device-controller @microdrop/ui-plugin && npm install",
+    "dev-mode": "npm run uninstall-pkgs && npm i ../mqttclient-web ../mqttclient-node",
+    "prod-mode": "npm run uninstall-pkgs && npm i @mqttclient/web @mqttclient/node",
+    "build": "./node_modules/.bin/webpack",
+    "build-dev": "npm run build",
+    "update-deps": "ncu -ua @mqttclient/node @mqttclient/web && npm install",
     "git-add": "git add package-lock.json && git add -p . && git commit",
-    "publish-pkg": "npm run build && npm version patch && npm publish && git push origin master"
+    "publish-pkg": "npm run prod-mode && npm run build && npm version patch && npm publish && git push origin master",
+    "uninstall-pkgs": "npm uninstall @mqttclient/web @mqttclient/node"
   },
   "author": "",
   "license": "BSD-2-Clause",
   "dependencies": {
-    "@mqttclient/node": "0.0.15",
-    "@mqttclient/web": "0.1.5",
+    "@mqttclient/node": "0.0.16",
+    "@mqttclient/web": "^0.1.7",
+    "ajv": "^5.3.0",
     "lodash": "^4.17.4",
     "mqtt": "^2.13.1"
   },
