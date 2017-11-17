@@ -1,3 +1,4 @@
+const Ajv = require('ajv');
 const lo = require('lodash');
 
 let fs, path;
@@ -6,7 +7,8 @@ try {
   path = require('path');
 } catch (e) {};
 
-DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 10000;
+const ajv = new Ajv({useDefaults: true});
 
 class Device {
   constructor(ms) {
@@ -14,12 +16,12 @@ class Device {
   }
 
   async threeObject() {
-    const LABEL = "<MicrodropAsync::Device::threeObject>"; console.log(LABEL);
+    const LABEL = "<MicrodropAsync::Device::threeObject>";
     try {
       const response = await this.ms.getState("device-model", "three-object");
       return response;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e]));
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
   async putThreeObject(threeObject, timeout=DEFAULT_TIMEOUT) {
@@ -34,7 +36,7 @@ class Device {
         "device-model", "three-object", msg, timeout);
       return response;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e.toString()]));
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 
@@ -51,7 +53,7 @@ class Device {
       );
       return r.response;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e.toString()]));
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 
@@ -64,22 +66,24 @@ class Device {
       lo.set(msg, "routes", routes);
       const payload = await this.ms.triggerPlugin("device-model",
         "electrodes-from-routes", msg, timeout);
-      return payload.response[0];
+      return payload.response;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e.toString()]));
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 
-  async electrodesFromRoute(start, path, timeout=DEFAULT_TIMEOUT) {
+  async electrodesFromRoute(route, timeout=DEFAULT_TIMEOUT) {
     const LABEL = "<MicrodropAsync::Device::electrodesFromRoute>";
-    /* Either ("" || {start: "", path: []}, []) */
     try {
-      if (lo.isPlainObject(start)) { start = arg1.start;  path = arg1.path}
-      if (!lo.isString(start)) throw("start should be a string");
-      if (!lo.isArray(path)) throw("path should be array");
-      return await this.electrodesFromRoutes([{start, path}]);
+      if (!lo.isPlainObject(route)) throw("route should be plain object");
+      const validate = ajv.compile(this.ms.routes.RouteSchema);
+      if (!validate(route)) throw(validate.errors);
+
+      const seqs = await this.electrodesFromRoutes([route]);
+      return seqs[0];
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e.toString()]));
+      console.error("ERRR", e);
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 

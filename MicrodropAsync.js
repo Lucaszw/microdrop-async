@@ -72,6 +72,7 @@ class MicrodropAsync extends MqttClient {
     }
 
     clientReady(timeout=DEFAULT_TIMEOUT) {
+      const LABEL = "<MicrodropAsync::clientReady>";
       return new Promise ((resolve, reject) => {
         if (this.connected) {
           resolve(true);
@@ -81,14 +82,18 @@ class MicrodropAsync extends MqttClient {
           });
         }
         setTimeout(() => {
-          reject(`<MicrodropAsync::clientReady> Timeout (${timeout})`)},
+          reject([LABEL, {timeout}])},
             timeout );
       });
     }
 
+    async getSubscriptions(receiver, timeout=DEFAULT_TIMEOUT) {
+      const payload = await this.triggerPlugin(receiver, "get-subscriptions", {}, timeout);
+      return payload.response;
+    }
+
     async triggerPlugin(receiver, action, val={}, timeout=DEFAULT_TIMEOUT) {
       const LABEL = `<MicrodropAsync::triggerPlugin> ${receiver}#${action}`;
-
       try {
         await this.clientReady();
         await this.clearSubscriptions();
@@ -96,7 +101,7 @@ class MicrodropAsync extends MqttClient {
           val, "trigger", timeout);
         return result;
       } catch (e) {
-        throw(lo.flattenDeep([LABEL, e.toString().split(",").join("\n")]));
+        throw(this.dumpStack(LABEL, e));
       }
     }
 
@@ -108,7 +113,7 @@ class MicrodropAsync extends MqttClient {
         return (await this.callAction(receiver, property, val, "put",
           timeout));
       } catch (e) {
-        throw(lo.flattenDeep([LABEL, e.toString().split(",").join("\n")]));
+        throw(this.dumpStack(LABEL, e));
       }
     }
 
@@ -141,13 +146,20 @@ class MicrodropAsync extends MqttClient {
         const payload = await getProp();
         return payload;
       } catch (e) {
-        var estr = e.toString().split(",").join("\n");
-        throw(lo.flattenDeep([LABEL, topic, estr]));
+        throw(this.dumpStack([LABEL, topic], e));
       }
     }
 
     callAction(receiver, action, val, type="trigger", timeout=DEFAULT_TIMEOUT) {
       const LABEL =`<MicrodropAsync::callAction>`;
+      let noTimeout = false;
+
+      if (timeout == -1) {
+        timeout = DEFAULT_TIMEOUT;
+        noTimeout = true;
+      }
+
+      lo.set(val, "__head__.plugin_name", this.name);
 
       return new Promise((resolve, reject) => {
         const topic = `microdrop/${type}/${receiver}/${action}`;
@@ -177,11 +189,21 @@ class MicrodropAsync extends MqttClient {
         });
 
         this.sendMessage(topic, val);
-        setTimeout(() => {
-          reject(lo.flattenDeep([LABEL, `Timeout (${timeout})`]));
-        }, timeout);
+        if (!noTimeout) {
+          setTimeout(() => {
+            reject(this.dumpStack(LABEL, {timeout}));
+          }, timeout);
+        }
       });
     }
+
+    dumpStack(label, err) {
+      if (err.stack)
+        return lo.flattenDeep([label, JSON.stringify(err.stack).replace(/\\/g, "").replace(/"/g,"").split("\n")]);
+      if (!err.stack)
+        return lo.flattenDeep([label, JSON.stringify(err).replace(/\\/g, "").replace(/"/g,"").split(",")]);
+    }
+
 }
 
 MicrodropAsync.MqttClient = MqttClient;

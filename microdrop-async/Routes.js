@@ -25,7 +25,7 @@ class Routes {
       const payload = await this.ms.putPlugin("routes-model", "routes", msg, timeout);
       return payload.response;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e]));
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 
@@ -35,7 +35,7 @@ class Routes {
       const routes = await this.ms.getState("routes-model", "routes", timeout);
       return routes;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e.toString().split(",").join("/n")]));
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 
@@ -57,7 +57,7 @@ class Routes {
       const d = await this.ms.triggerPlugin("routes-model", "execute", msg, timeout);
       return d;
     } catch (e) {
-      throw([LABEL, e, {args: [routes]}]);
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 
@@ -72,7 +72,7 @@ class Routes {
       const payload = await this.ms.putPlugin("routes-model", "routes", msg, timeout);
       return payload.response;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e]));
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 
@@ -92,7 +92,7 @@ class Routes {
       const payload = await this.ms.putPlugin("routes-model", "route", msg, timeout);
       return payload.response;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e]));
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 

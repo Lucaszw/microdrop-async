@@ -43,7 +43,7 @@ class Electrodes {
         "toggle-electrode", msg, timeout);
       return payload.response;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e.toString().split(",").join("\n")]));
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 
@@ -59,7 +59,7 @@ class Electrodes {
         msg, timeout);
       return payload.response;
     } catch (e) {
-      throw(lo.flattenDeep([LABEL, e.toString().split(",").join("\n")]));
+      throw(this.ms.dumpStack(LABEL, e));
     }
   }
 
