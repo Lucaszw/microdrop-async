@@ -4,11 +4,9 @@
   "description": "Promise based library for controlling microdrop",
   "main": "MicrodropAsync.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "git-add": "git add package-lock.json && git add -p . && git commit",
-    "publish-pkg": "npm run prod-mode && npm run build && npm version patch && npm publish && git push origin master"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Sci-Bots",
   "license": "BSD-2-Clause",
   "dependencies": {
     "@mqttclient/node": "0.0.16",
@@ -18,7 +16,7 @@
     "mqtt": "^2.13.1"
   },
   "devDependencies": {
-    "@microdrop/buildutils": "file:../buildutils",
+    "@microdrop/buildutils": "0.0.2",
     "gulp": "^3.9.1",
     "webpack": "^3.8.1"
   },
