@@ -204,6 +204,27 @@ class MicrodropAsync extends MqttClient {
         return lo.flattenDeep([label, JSON.stringify(err).replace(/\\/g, "").replace(/"/g,"").split(",")]);
     }
 
+    static get Electrodes() {
+      return Electrodes;
+    }
+    static get Device() {
+      return Device;
+    }
+    static get PluginManager() {
+      return PluginManager;
+    }
+    static get Protocol() {
+      return Protocol;
+    }
+    static get Routes() {
+      return Routes;
+    }
+    static get Schema() {
+      return Schema;
+    }
+    static get Steps() {
+      return Steps;
+    }
 }
 
 MicrodropAsync.MqttClient = MqttClient;

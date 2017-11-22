@@ -87,6 +87,44 @@ class Device {
     }
   }
 
+  static get maps() {
+    return ["jet", "hot", "cool", "spring", "summer", "autumn", "winter",
+    "bone", "copper", "greys", "greens", "bluered", "rainbow", "portland",
+    "blackbody", "earth", "electric", "viridis", "inferno", "magma", "plasma", "RdBu",
+    "warm", "bathymetry", "chlorophyll", "density",
+    "freesurface-blue", "freesurface-red", "oxygen", "par", "phase", "salinity",
+    "temperature", "turbidity", "velocity-blue", "velocity-green"];
+  }
+
+  static get OverlaySchema() {
+    return {
+      type: "object",
+      properties: {
+        electrodes: {
+          type: "object",
+          patternProperties: {
+            "^(electrode[0-9]+)+$": {
+              type: "object",
+              properties: {
+                scale: {type: "number", default: 0.5},
+                intensity: {type: "integer", default: 3}
+              }
+            }
+          }
+        },
+        name: {type: "string"},
+        type: {type: "string", default: "colormap", enum: ["colormap", "shapemap", "both"]},
+        visible: {type: "boolean", default: true},
+        colorRange: {type: "integer", default:10, minimum: 10},
+        shapeScale: {type: "number", default: 0.5, minimum: 0.1, maximum: 2},
+        colorMap: {type: "string",  default: "temperature", enum: Device.maps},
+        numEdges: {type: "integer", default: 30, minimum: 3, maximum: 30},
+        colorAll: {type: "boolean", default: true},
+        shapeAll: {type: "boolean", default: false}
+      },
+      required: ["electrodes", "name", "type", "visible"]
+    };
+  }
 }
 
 module.exports = Device;
