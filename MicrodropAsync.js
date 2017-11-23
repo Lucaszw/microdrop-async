@@ -13,7 +13,6 @@ try {
 }
 const Electrodes = require('./microdrop-async/Electrodes');
 const Device = require('./microdrop-async/Device');
-const Protocol = require('./microdrop-async/Protocol');
 const PluginManager = require('./microdrop-async/PluginManager');
 const Routes = require('./microdrop-async/Routes');
 
