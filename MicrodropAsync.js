@@ -16,8 +16,6 @@ const Device = require('./microdrop-async/Device');
 const Protocol = require('./microdrop-async/Protocol');
 const PluginManager = require('./microdrop-async/PluginManager');
 const Routes = require('./microdrop-async/Routes');
-const Schema = require('./microdrop-async/Schema');
-const Steps = require('./microdrop-async/Steps');
 
 DEFAULT_TIMEOUT = 10000;
 
@@ -48,10 +46,7 @@ class MicrodropAsync extends MqttClient {
       this.electrodes = new Electrodes(this);
       this.device = new Device(this);
       this.pluginManager = new PluginManager(this);
-      this.protocol = new Protocol(this);
       this.routes = new Routes(this);
-      this.schema = new Schema(this);
-      this.steps = new Steps(this);
       this._name = this.generateId();
     }
     listen() {
@@ -213,17 +208,8 @@ class MicrodropAsync extends MqttClient {
     static get PluginManager() {
       return PluginManager;
     }
-    static get Protocol() {
-      return Protocol;
-    }
     static get Routes() {
       return Routes;
-    }
-    static get Schema() {
-      return Schema;
-    }
-    static get Steps() {
-      return Steps;
     }
 }
 
