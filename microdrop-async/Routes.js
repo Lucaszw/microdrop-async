@@ -10,7 +10,7 @@ class Routes {
   }
 
   async clear(routes, timeout=DEFAULT_TIMEOUT) {
-    const LABEL = "<MicrodropAsync::Routes::clear>"; console.log(LABEL);
+    const LABEL = "<MicrodropAsync::Routes::clear>"; //console.log(LABEL);
     try {
       if (!lo.isArray(routes)) throw("expected arg1 to be array of routes")
 
@@ -30,7 +30,7 @@ class Routes {
   }
 
   async routes(timeout=DEFAULT_TIMEOUT) {
-    const LABEL = "<MicrodropAsync::Routes::routes>"; console.log(LABEL);
+    const LABEL = "<MicrodropAsync::Routes::routes>"; //console.log(LABEL);
     try {
       const routes = await this.ms.getState("routes-model", "routes", timeout);
       return routes;
@@ -40,7 +40,7 @@ class Routes {
   }
 
   async execute(routes, timeout=null) {
-    const LABEL = "<MicrodropAsync::Routes::execute>"; console.log(LABEL);
+    const LABEL = "<MicrodropAsync::Routes::execute>"; //console.log(LABEL);
     const msg = {};
     try {
       if (!lo.isArray(routes)) throw("arg 1 should be an array");
