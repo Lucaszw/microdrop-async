@@ -14,7 +14,7 @@ class Routes {
     try {
       if (!lo.isArray(routes)) throw("expected arg1 to be array of routes")
 
-      const uuids = _.map(routes, 'uuid');
+      const uuids = lo.map(routes, 'uuid');
       routes = await this.routes(timeout);
       routes = lo.filter(routes, (r)=>!lo.includes(uuids, r.uuid));
 
@@ -45,13 +45,13 @@ class Routes {
     try {
       if (!lo.isArray(routes)) throw("arg 1 should be an array");
 
-      const numSteps = _.zip(_.map(routes, "path")).length;
+      const numSteps = lo.zip(lo.map(routes, "path")).length;
       if (!timeout) timeout =  2 * numSteps * DEFAULT_TIMEOUT;
 
       const validate = ajv.compile(this.RouteSchema);
       if (!validate(routes[0])) throw(validate.errors);
 
-      lo.set(msg, "__head__.plugin_name", this.ms.name);
+      lo.set(msg, "__head_lo.plugin_name", this.ms.name);
       lo.set(msg, "routes", routes);
 
       const d = await this.ms.triggerPlugin("routes-model", "execute", msg, timeout);
@@ -84,7 +84,7 @@ class Routes {
       if (lo.isString(start))  { msg = {start, path} }
       if (!lo.isString(start)) { msg = start }
 
-      _.set(msg, "__head__.plugin_name", this.ms.name);
+      lo.set(msg, "__head_lo.plugin_name", this.ms.name);
 
       const validate = ajv.compile(this.RouteSchema);
       if (!validate(msg)) throw(validate.errors);
