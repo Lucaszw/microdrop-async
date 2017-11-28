@@ -101,6 +101,10 @@ class MicrodropAsync extends MqttClient {
 
     async putPlugin(receiver, property, val, timeout=DEFAULT_TIMEOUT) {
       const LABEL = `<MicrodropAsync::putPlugin> ${receiver}#${property}`;
+      if (!lo.isPlainObject(val)) {
+        let msg = {}; lo.set(msg, property, val);
+        val = msg;
+      }
       try {
         await this.clientReady(timeout);
         await this.clearSubscriptions(timeout);

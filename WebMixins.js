@@ -57,7 +57,6 @@ WebMixins.clearSubscriptions = function(timeout=DEFAULT_TIMEOUT) {
       this.client.connect({
         onSuccess: () => {
           for (const [i, sub] of subscriptions.entries()) {
-            console.log("Subscribing::", sub);
             this.client.subscribe(sub);
           }
           // Re-add client event bindings (removed after disconnect)
